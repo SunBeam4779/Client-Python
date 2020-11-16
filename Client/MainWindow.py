@@ -13,8 +13,8 @@ class MainWindow(QWidget):
     _icon = "./docs/20190702211158.jpg"
     _size_of_x = 800
     _size_of_y = 450
-    _size_of_profile_x = 120
-    _size_of_profile_y = 120
+    _size_of_profile_x = 300
+    _size_of_profile_y = 300
 
     def __init__(self, user):
         super(MainWindow, self).__init__()
@@ -59,30 +59,37 @@ class MainWindow(QWidget):
         self.Respiration = QLabel(self)
         self.Video = QLabel(self)
 
+        # split line
+        # self.splitter =
+
         # set status image
-        self.status1 = QFrame(self)
-        self.status1.setFixedSize(20, 20)
-        self.status2 = QFrame(self)
-        self.status2.setFixedSize(20, 20)
-        self.status3 = QFrame(self)
-        self.status3.setFixedSize(20, 20)
-        self.status4 = QFrame(self)
-        self.status4.setFixedSize(20, 20)
-        self.status5 = QFrame(self)
-        self.status5.setFixedSize(20, 20)
-        self.status6 = QFrame(self)
-        self.status6.setFixedSize(20, 20)
-        self.status7 = QFrame(self)
-        self.status7.setFixedSize(20, 20)
-        self.color = QColor(0, 0, 0)
-        self.color.setGreen(255)
-        self.status1.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
-        self.status2.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
-        self.status3.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
-        self.status4.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
-        self.status5.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
-        self.status6.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
-        self.status7.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
+        # self.status1 = QFrame(self)
+        # self.status1.setFixedSize(20, 20)
+        # self.status2 = QFrame(self)
+        # self.status2.setFixedSize(20, 20)
+        # self.status3 = QFrame(self)
+        # self.status3.setFixedSize(20, 20)
+        # self.status4 = QFrame(self)
+        # self.status4.setFixedSize(20, 20)
+        # self.status5 = QFrame(self)
+        # self.status5.setFixedSize(20, 20)
+        # self.status6 = QFrame(self)
+        # self.status6.setFixedSize(20, 20)
+        # self.status7 = QFrame(self)
+        # self.status7.setFixedSize(20, 20)
+        # self.color = QColor(0, 0, 0)
+        # self.color.setGreen(255)
+        # self.status1.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
+        # self.status2.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
+        # self.status3.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
+        # self.status4.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
+        # self.status5.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
+        # self.status6.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
+        # self.status7.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
+        self.valueOfHeartRate = QLabel()
+        self.valueOfBloodPressure = QLabel()
+        self.valueOfRespRate = QLabel()
+        self.valueOfSpO2 = QLabel()
 
         # set button
         self.Acquire = QPushButton()
@@ -95,24 +102,24 @@ class MainWindow(QWidget):
         self.time = QPushButton()
 
         # set layout
-        self.horizon_layout = QHBoxLayout()
+        self.vertical_layout = QVBoxLayout()
 
-        self.vertical_left_layout = QVBoxLayout()
-        self.horizon_left_top_layout = QHBoxLayout()
-        self.vertical_left_top_right_layout = QVBoxLayout()
-        self.vertical_left_bottom_layout = QVBoxLayout()
-        self.horizon_left_bottom_layout_HR = QHBoxLayout()
-        self.horizon_left_bottom_layout_BP = QHBoxLayout()
-        self.horizon_left_bottom_layout_RESPR = QHBoxLayout()
-        self.horizon_left_bottom_layout_ECG = QHBoxLayout()
-        self.horizon_left_bottom_layout_SpO2 = QHBoxLayout()
-        self.horizon_left_bottom_layout_PW = QHBoxLayout()
-        self.horizon_left_bottom_layout_RESP = QHBoxLayout()
+        self.horizon_top_layout = QHBoxLayout()
+        self.vertical_top_left_info_layout = QVBoxLayout()
+        self.horizon_top_left_button_layout = QHBoxLayout()
+        self.horizon_top_left_profile = QHBoxLayout()
+        self.vertical_top_left_layout = QVBoxLayout()
+        self.horizon_top_right_layout = QHBoxLayout()
+        self.vertical_right_top_left_layout = QVBoxLayout()
 
-        self.vertical_right_layout = QVBoxLayout()
-        self.horizon_right_bottom_layout = QHBoxLayout()
-        self.vertical_right_top_layout = QVBoxLayout()
-        self.horizon_right_top_bottom_layout = QHBoxLayout()
+        self.vertical_bottom_layout = QVBoxLayout()
+        self.horizon_bottom_left_layout_HR = QHBoxLayout()
+        self.horizon_bottom_left_layout_BP = QHBoxLayout()
+        self.horizon_bottom_left_layout_RESPR = QHBoxLayout()
+        self.horizon_bottom_left_layout_ECG = QHBoxLayout()
+        self.horizon_bottom_left_layout_SpO2 = QHBoxLayout()
+        self.horizon_bottom_left_layout_PW = QHBoxLayout()
+        self.horizon_bottom_left_layout_RESP = QHBoxLayout()
 
         # add item
         self.add_label()
@@ -128,7 +135,7 @@ class MainWindow(QWidget):
         :return: none
         """
 
-        self.setLayout(self.horizon_layout)
+        self.setLayout(self.vertical_layout)
         self.setWindowTitle("欢迎使用！" + self.user_name)
 
         # desktop = QtWidgets.QApplication.desktop()
@@ -145,77 +152,87 @@ class MainWindow(QWidget):
         # self.setFixedHeight(650)
         # self.setFixedSize(self.width(), self.height())
 
+        # set left-top-mid
+        # self.vertical_left_top_right_layout.addStretch(0)
+        self.vertical_top_left_info_layout.addWidget(self.username)
+        self.vertical_top_left_info_layout.addWidget(self.gender)
+        self.vertical_top_left_info_layout.addWidget(self.ID)
+        self.vertical_top_left_info_layout.addWidget(self.EnterDate)
+
         # set left-top-right
-        self.vertical_left_top_right_layout.addStretch(0)
-        self.vertical_left_top_right_layout.addWidget(self.username)
-        self.vertical_left_top_right_layout.addWidget(self.gender)
-        self.vertical_left_top_right_layout.addWidget(self.ID)
-        self.vertical_left_top_right_layout.addWidget(self.EnterDate)
+        self.horizon_top_left_button_layout.addWidget(self.Acquire)
+        # self.horizon_top_left_button_layout.addStretch(0)
+        self.horizon_top_left_button_layout.addWidget(self.CheckAndManage)
+        # self.horizon_top_left_button_layout.addStretch(0)
+        self.horizon_top_left_button_layout.addWidget(self.Synchronize)
+        # self.horizon_top_left_button_layout.addStretch(0)
+        self.horizon_top_left_button_layout.addWidget(self.time)
+        # self.horizon_top_left_button_layout.addStretch(0)
+        self.horizon_top_left_button_layout.addWidget(self.Log)
+        self.horizon_top_left_button_layout.addStretch(0)
 
         # set left-top
-        self.horizon_left_top_layout.addWidget(self.Profile, alignment=Qt.AlignBottom)
-        self.horizon_left_top_layout.addLayout(self.vertical_left_top_right_layout)
+        self.horizon_top_left_profile.addWidget(self.Profile, alignment=Qt.AlignBottom)
+        self.horizon_top_left_profile.addLayout(self.vertical_top_left_info_layout)
+        self.horizon_top_left_profile.addStretch(0)
 
-        # set left-bottom
-        self.horizon_left_bottom_layout_HR.addWidget(self.HeartRate)
-        self.horizon_left_bottom_layout_HR.addWidget(self.status1)
-        self.horizon_left_bottom_layout_HR.addStretch(0)
-        self.vertical_left_bottom_layout.addLayout(self.horizon_left_bottom_layout_HR)
-        self.horizon_left_bottom_layout_BP.addWidget(self.BloodPressure)
-        self.horizon_left_bottom_layout_BP.addWidget(self.status2)
-        self.horizon_left_bottom_layout_BP.addStretch(0)
-        self.vertical_left_bottom_layout.addLayout(self.horizon_left_bottom_layout_BP)
-        self.horizon_left_bottom_layout_RESPR.addWidget(self.RespirationRate)
-        self.horizon_left_bottom_layout_RESPR.addWidget(self.status3)
-        self.horizon_left_bottom_layout_RESPR.addStretch(0)
-        self.vertical_left_bottom_layout.addLayout(self.horizon_left_bottom_layout_RESPR)
-        self.horizon_left_bottom_layout_ECG.addWidget(self.ECG)
-        self.horizon_left_bottom_layout_ECG.addWidget(self.status4)
-        self.horizon_left_bottom_layout_ECG.addStretch(0)
-        self.vertical_left_bottom_layout.addLayout(self.horizon_left_bottom_layout_ECG)
-        self.horizon_left_bottom_layout_SpO2.addWidget(self.SpO2)
-        self.horizon_left_bottom_layout_SpO2.addWidget(self.status5)
-        self.horizon_left_bottom_layout_SpO2.addStretch(0)
-        self.vertical_left_bottom_layout.addLayout(self.horizon_left_bottom_layout_SpO2)
-        self.horizon_left_bottom_layout_PW.addWidget(self.PulseWave)
-        self.horizon_left_bottom_layout_PW.addWidget(self.status6)
-        self.horizon_left_bottom_layout_PW.addStretch(0)
-        self.vertical_left_bottom_layout.addLayout(self.horizon_left_bottom_layout_PW)
-        self.horizon_left_bottom_layout_RESP.addWidget(self.Respiration)
-        self.horizon_left_bottom_layout_RESP.addWidget(self.status7)
-        self.horizon_left_bottom_layout_RESP.addStretch(0)
-        self.vertical_left_bottom_layout.addLayout(self.horizon_left_bottom_layout_RESP)
+        self.vertical_top_left_layout.addLayout(self.horizon_top_left_profile)
+        self.vertical_top_left_layout.addLayout(self.horizon_top_left_button_layout)
 
-        # set left
-        self.vertical_left_layout.addLayout(self.horizon_left_top_layout)
-        self.vertical_left_layout.addStretch(0)
-        self.vertical_left_layout.addLayout(self.vertical_left_bottom_layout)
+        # set top-right
+        self.vertical_right_top_left_layout.addWidget(self.VideoSaving)
+        self.vertical_right_top_left_layout.addStretch(0)
+        self.vertical_right_top_left_layout.addWidget(self.Pause)
+        self.vertical_right_top_left_layout.addStretch(0)
+        self.vertical_right_top_left_layout.addWidget(self.Stop)
 
-        # set right-top-bottom
-        self.horizon_right_top_bottom_layout.addWidget(self.VideoSaving)
-        self.horizon_right_top_bottom_layout.addWidget(self.Pause)
-        self.horizon_right_top_bottom_layout.addWidget(self.Stop)
+        self.horizon_top_right_layout.addLayout(self.vertical_right_top_left_layout)
+        self.horizon_top_right_layout.addWidget(self.Video)
 
-        # set right-top
-        self.vertical_right_top_layout.addWidget(self.Video)
-        self.vertical_right_top_layout.addLayout(self.horizon_right_top_bottom_layout)
+        # set top
+        self.horizon_top_layout.addLayout(self.vertical_top_left_layout)
+        self.horizon_top_layout.addLayout(self.horizon_top_right_layout)
 
-        # set right-bottom
-        self.horizon_right_bottom_layout.addWidget(self.Acquire)
-        self.horizon_right_bottom_layout.addWidget(self.CheckAndManage)
-        self.horizon_right_bottom_layout.addWidget(self.Synchronize)
-        self.horizon_right_bottom_layout.addWidget(self.time)
-        self.horizon_right_bottom_layout.addWidget(self.Log)
+        # set bottom-left
+        self.horizon_bottom_left_layout_HR.addWidget(self.HeartRate)
+        self.horizon_bottom_left_layout_HR.addWidget(self.valueOfHeartRate)
+        self.horizon_bottom_left_layout_HR.addStretch(0)
+        self.vertical_bottom_layout.addLayout(self.horizon_bottom_left_layout_HR)
 
-        # set right
-        self.vertical_right_layout.addLayout(self.vertical_right_top_layout)
-        self.vertical_right_layout.addStretch(0)
-        self.vertical_right_layout.addLayout(self.horizon_right_bottom_layout)
+        self.horizon_bottom_left_layout_BP.addWidget(self.BloodPressure)
+        self.horizon_bottom_left_layout_BP.addWidget(self.valueOfBloodPressure)
+        self.horizon_bottom_left_layout_BP.addStretch(0)
+        self.vertical_bottom_layout.addLayout(self.horizon_bottom_left_layout_BP)
+
+        self.horizon_bottom_left_layout_RESPR.addWidget(self.RespirationRate)
+        self.horizon_bottom_left_layout_RESPR.addWidget(self.valueOfRespRate)
+        self.horizon_bottom_left_layout_RESPR.addStretch(0)
+        self.vertical_bottom_layout.addLayout(self.horizon_bottom_left_layout_RESPR)
+
+        self.horizon_bottom_left_layout_SpO2.addWidget(self.SpO2)
+        self.horizon_bottom_left_layout_SpO2.addWidget(self.valueOfSpO2)
+        self.horizon_bottom_left_layout_SpO2.addStretch(0)
+        self.vertical_bottom_layout.addLayout(self.horizon_bottom_left_layout_SpO2)
+
+        self.horizon_bottom_left_layout_ECG.addWidget(self.ECG)
+        # self.horizon_bottom_left_layout_ECG.addWidget(self.status4)
+        self.horizon_bottom_left_layout_ECG.addStretch(0)
+        self.vertical_bottom_layout.addLayout(self.horizon_bottom_left_layout_ECG)
+
+        self.horizon_bottom_left_layout_PW.addWidget(self.PulseWave)
+        # self.horizon_bottom_left_layout_PW.addWidget(self.status6)
+        self.horizon_bottom_left_layout_PW.addStretch(0)
+        self.vertical_bottom_layout.addLayout(self.horizon_bottom_left_layout_PW)
+
+        self.horizon_bottom_left_layout_RESP.addWidget(self.Respiration)
+        # self.horizon_bottom_left_layout_RESP.addWidget(self.status7)
+        self.horizon_bottom_left_layout_RESP.addStretch(0)
+        self.vertical_bottom_layout.addLayout(self.horizon_bottom_left_layout_RESP)
 
         # set the whole layout
-        self.horizon_layout.addLayout(self.vertical_left_layout)
-        self.horizon_layout.addStretch(0)
-        self.horizon_layout.addLayout(self.vertical_right_layout)
+        self.vertical_layout.addLayout(self.horizon_top_layout)
+        self.vertical_layout.addStretch(0)
+        self.vertical_layout.addLayout(self.vertical_bottom_layout)
 
     def add_button(self):
 
@@ -247,11 +264,15 @@ class MainWindow(QWidget):
         self.Pause.setText("暂停")
         self.Stop.setText("停止")
 
-        self.Acquire.setFixedSize(100, 100)
-        self.CheckAndManage.setFixedSize(100, 100)
-        self.Synchronize.setFixedSize(100, 100)
-        self.time.setFixedSize(100, 100)
-        self.Log.setFixedSize(100, 100)
+        self.Acquire.setFixedSize(165, 100)
+        self.CheckAndManage.setFixedSize(165, 100)
+        self.Synchronize.setFixedSize(165, 100)
+        self.time.setFixedSize(165, 100)
+        self.Log.setFixedSize(165, 100)
+
+        self.VideoSaving.setFixedSize(100, 100)
+        self.Pause.setFixedSize(100, 100)
+        self.Stop.setFixedSize(100, 100)
 
         self.Acquire.clicked.connect(self.slot_acquire)
         self.CheckAndManage.clicked.connect(self.slot_data_manager)
@@ -267,11 +288,11 @@ class MainWindow(QWidget):
 
         font_of_profile = QFont()
         font_of_profile.setFamily('Times')
-        font_of_profile.setPixelSize(23)
+        font_of_profile.setPixelSize(55)
 
         font_of_info = QFont()
         font_of_info.setFamily('Times')
-        font_of_info.setPixelSize(23)
+        font_of_info.setPixelSize(35)
 
         self.Profile.setFont(font_of_profile)
         self.username.setFont(font_of_profile)
@@ -287,6 +308,16 @@ class MainWindow(QWidget):
         self.PulseWave.setFont(font_of_info)
         self.Respiration.setFont(font_of_info)
 
+        self.valueOfHeartRate.setFont(font_of_info)
+        self.valueOfBloodPressure.setFont(font_of_info)
+        self.valueOfRespRate.setFont(font_of_info)
+        self.valueOfSpO2.setFont(font_of_info)
+
+        self.valueOfHeartRate.setText("--")
+        self.valueOfBloodPressure.setText("--")
+        self.valueOfRespRate.setText("--")
+        self.valueOfSpO2.setText("--")
+
         # set the text color
         self.HeartRate.setStyleSheet("color:green")
         self.BloodPressure.setStyleSheet("color:green")
@@ -296,6 +327,11 @@ class MainWindow(QWidget):
         self.PulseWave.setStyleSheet("color:green")
         self.Respiration.setStyleSheet("color:green")
 
+        self.valueOfHeartRate.setStyleSheet("color:green")
+        self.valueOfBloodPressure.setStyleSheet("color:green")
+        self.valueOfRespRate.setStyleSheet("color:green")
+        self.valueOfSpO2.setStyleSheet("color:green")
+
         # this will be replaced by the user's image later
         self.Profile.setPixmap(QPixmap(self.profile).scaled(self._size_of_profile_x, self._size_of_profile_y))
         self.username.setText("用户姓名：" + self.user_name)
@@ -304,7 +340,7 @@ class MainWindow(QWidget):
         self.EnterDate.setText("入园日期：" + self.user_enter_date)
 
         # this will be replaced by the video preview later
-        self.Video.setPixmap((QPixmap("./docs/20191012094812.jpg").scaled(500, 300)))
+        self.Video.setPixmap((QPixmap("./docs/20191012094812.jpg").scaled(720, 400)))
 
         self.HeartRate.setText("心率：")
         self.BloodPressure.setText("血压：")
