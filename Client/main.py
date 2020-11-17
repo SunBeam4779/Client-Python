@@ -24,10 +24,10 @@ import sys
 # print(thisDate)
 app = QApplication(sys.argv)
 # window = DataAcquire(None)
-# window = MainWindow([])
+window = MainWindow([])
 # window = InformationCheck()  # this should be neglected
 # window = Synchronize(None)
-window = StartWindow()
+# window = StartWindow()
 # window = BLE()
 # window = DataManager(0)
 # window = LogManager("not defined")

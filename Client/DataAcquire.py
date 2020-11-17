@@ -145,7 +145,7 @@ class DataAcquire(QWidget):
         self.Respiration.setText("呼吸")
         self.save.setText("保存")
         self.clear.setText("清除")
-        self.exit.setText("退出")
+        self.exit.setText("返回")
 
         self.save.clicked.connect(self.slot_stop)
         self.clear.clicked.connect(self.start)

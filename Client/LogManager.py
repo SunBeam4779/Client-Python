@@ -116,7 +116,7 @@ class LogManager(QWidget):
         # set text
         self.check_data.setText("查看")
         self.delete_data.setText("删除")
-        self.exit.setText("退出")
+        self.exit.setText("返回")
 
         self.check_data.setFixedSize(300, 150)
         self.delete_data.setFixedSize(300, 150)

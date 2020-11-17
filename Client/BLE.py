@@ -123,7 +123,7 @@ class BLE(QWidget):
         self.Search.setText("搜索")
         self.Connect.setText("连接")
         self.Acquire.setText("采集")
-        self.Exit.setText("退出")
+        self.Exit.setText("返回")
 
         self.Refresh.setFixedSize(300, 110)
         self.Search.setFixedSize(300, 110)
