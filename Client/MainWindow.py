@@ -1,11 +1,18 @@
 import pymysql
 import os
 
+from PyQt5 import QtWidgets
 from PyQt5.Qt import *
 from Client.BLE import BLE
+from Client.BLEwithBleak import BLEwithBleak
 from Client.DataManager import DataManager
 from Client.Synchronize import Synchronize
 from Client.LogManager import LogManager
+from Client.GetIP import GetIP
+
+import pyqtgraph as pg
+import numpy as np
+from pyqtgraph import GraphicsLayoutWidget
 
 
 class MainWindow(QWidget):
@@ -30,6 +37,7 @@ class MainWindow(QWidget):
         self.profile = "./docs/20190702211158.jpg"
         self.get_user_info(user)
         self.profile = self.get_user_profile(self.user_unique)
+        self.ip_address = "not defined"
 
         # make directories for user
         self.make_user_dir()
@@ -42,6 +50,7 @@ class MainWindow(QWidget):
         self.data_manager_win = None
         self.data_sync_win = None
         self.log_win = None
+        self.getIP_win = None
 
         # set label
         self.gender = QLabel(self)
@@ -59,33 +68,26 @@ class MainWindow(QWidget):
         self.Respiration = QLabel(self)
         self.Video = QLabel(self)
 
-        # split line
-        # self.splitter =
+        # set data graph
+        pg.setConfigOption('background', '#f0f0f0')
+        pg.setConfigOption('foreground', 'd')
+        pg.setConfigOptions(antialias=True)
 
-        # set status image
-        # self.status1 = QFrame(self)
-        # self.status1.setFixedSize(20, 20)
-        # self.status2 = QFrame(self)
-        # self.status2.setFixedSize(20, 20)
-        # self.status3 = QFrame(self)
-        # self.status3.setFixedSize(20, 20)
-        # self.status4 = QFrame(self)
-        # self.status4.setFixedSize(20, 20)
-        # self.status5 = QFrame(self)
-        # self.status5.setFixedSize(20, 20)
-        # self.status6 = QFrame(self)
-        # self.status6.setFixedSize(20, 20)
-        # self.status7 = QFrame(self)
-        # self.status7.setFixedSize(20, 20)
-        # self.color = QColor(0, 0, 0)
-        # self.color.setGreen(255)
-        # self.status1.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
-        # self.status2.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
-        # self.status3.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
-        # self.status4.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
-        # self.status5.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
-        # self.status6.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
-        # self.status7.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
+        self.central_widget = QtWidgets.QWidget(self)
+        self.ECG_graph = GraphicsLayoutWidget(self)
+        self.Pulse_graph = GraphicsLayoutWidget(self)
+        self.RESP_graph = GraphicsLayoutWidget(self)
+
+        # fake data
+        data = np.loadtxt("./docs/data/yuhang4131130301/ECG/filtered/data332_Channel1_dec.txt")
+        data2 = np.loadtxt("./docs/data/yuhang4131130301/ECG/filtered/data312_Channel1_dec.txt")
+        print(data.shape)
+        print(data2.shape)
+
+        self.ECG_graph.addPlot(y=data, pen=pg.mkPen(color='b', width=2))
+        self.Pulse_graph.addPlot(y=data, pen=pg.mkPen(color='b', width=2))
+        self.RESP_graph.addPlot(y=data2, pen=pg.mkPen(color='b', width=2))
+
         self.valueOfHeartRate = QLabel()
         self.valueOfBloodPressure = QLabel()
         self.valueOfRespRate = QLabel()
@@ -113,11 +115,8 @@ class MainWindow(QWidget):
         self.vertical_right_top_left_layout = QVBoxLayout()
 
         self.vertical_bottom_layout = QVBoxLayout()
-        self.horizon_bottom_left_layout_HR = QHBoxLayout()
-        self.horizon_bottom_left_layout_BP = QHBoxLayout()
-        self.horizon_bottom_left_layout_RESPR = QHBoxLayout()
+        self.horizon_bottom_top_layout_value = QHBoxLayout()
         self.horizon_bottom_left_layout_ECG = QHBoxLayout()
-        self.horizon_bottom_left_layout_SpO2 = QHBoxLayout()
         self.horizon_bottom_left_layout_PW = QHBoxLayout()
         self.horizon_bottom_left_layout_RESP = QHBoxLayout()
 
@@ -181,9 +180,9 @@ class MainWindow(QWidget):
 
         # set top-right
         self.vertical_right_top_left_layout.addWidget(self.VideoSaving)
-        self.vertical_right_top_left_layout.addStretch(0)
+        # self.vertical_right_top_left_layout.addStretch(0)
         self.vertical_right_top_left_layout.addWidget(self.Pause)
-        self.vertical_right_top_left_layout.addStretch(0)
+        # self.vertical_right_top_left_layout.addStretch(0)
         self.vertical_right_top_left_layout.addWidget(self.Stop)
 
         self.horizon_top_right_layout.addLayout(self.vertical_right_top_left_layout)
@@ -194,44 +193,43 @@ class MainWindow(QWidget):
         self.horizon_top_layout.addLayout(self.horizon_top_right_layout)
 
         # set bottom-left
-        self.horizon_bottom_left_layout_HR.addWidget(self.HeartRate)
-        self.horizon_bottom_left_layout_HR.addWidget(self.valueOfHeartRate)
-        self.horizon_bottom_left_layout_HR.addStretch(0)
-        self.vertical_bottom_layout.addLayout(self.horizon_bottom_left_layout_HR)
+        self.horizon_bottom_top_layout_value.addWidget(self.HeartRate)
+        self.horizon_bottom_top_layout_value.addWidget(self.valueOfHeartRate)
+        self.horizon_bottom_top_layout_value.addStretch(0)
 
-        self.horizon_bottom_left_layout_BP.addWidget(self.BloodPressure)
-        self.horizon_bottom_left_layout_BP.addWidget(self.valueOfBloodPressure)
-        self.horizon_bottom_left_layout_BP.addStretch(0)
-        self.vertical_bottom_layout.addLayout(self.horizon_bottom_left_layout_BP)
+        self.horizon_bottom_top_layout_value.addWidget(self.BloodPressure)
+        self.horizon_bottom_top_layout_value.addWidget(self.valueOfBloodPressure)
+        self.horizon_bottom_top_layout_value.addStretch(0)
 
-        self.horizon_bottom_left_layout_RESPR.addWidget(self.RespirationRate)
-        self.horizon_bottom_left_layout_RESPR.addWidget(self.valueOfRespRate)
-        self.horizon_bottom_left_layout_RESPR.addStretch(0)
-        self.vertical_bottom_layout.addLayout(self.horizon_bottom_left_layout_RESPR)
+        self.horizon_bottom_top_layout_value.addWidget(self.RespirationRate)
+        self.horizon_bottom_top_layout_value.addWidget(self.valueOfRespRate)
+        self.horizon_bottom_top_layout_value.addStretch(0)
 
-        self.horizon_bottom_left_layout_SpO2.addWidget(self.SpO2)
-        self.horizon_bottom_left_layout_SpO2.addWidget(self.valueOfSpO2)
-        self.horizon_bottom_left_layout_SpO2.addStretch(0)
-        self.vertical_bottom_layout.addLayout(self.horizon_bottom_left_layout_SpO2)
+        self.horizon_bottom_top_layout_value.addWidget(self.SpO2)
+        self.horizon_bottom_top_layout_value.addWidget(self.valueOfSpO2)
+        self.horizon_bottom_top_layout_value.addStretch(0)
+        # self.vertical_bottom_layout.addLayout(self.horizon_bottom_top_layout_value)
 
         self.horizon_bottom_left_layout_ECG.addWidget(self.ECG)
-        # self.horizon_bottom_left_layout_ECG.addWidget(self.status4)
-        self.horizon_bottom_left_layout_ECG.addStretch(0)
+        self.horizon_bottom_left_layout_ECG.addWidget(self.ECG_graph)
+        # self.horizon_bottom_left_layout_ECG.addStretch(0)
         self.vertical_bottom_layout.addLayout(self.horizon_bottom_left_layout_ECG)
 
         self.horizon_bottom_left_layout_PW.addWidget(self.PulseWave)
-        # self.horizon_bottom_left_layout_PW.addWidget(self.status6)
-        self.horizon_bottom_left_layout_PW.addStretch(0)
+        self.horizon_bottom_left_layout_PW.addWidget(self.Pulse_graph)
+        # self.horizon_bottom_left_layout_PW.addStretch(0)
         self.vertical_bottom_layout.addLayout(self.horizon_bottom_left_layout_PW)
 
         self.horizon_bottom_left_layout_RESP.addWidget(self.Respiration)
-        # self.horizon_bottom_left_layout_RESP.addWidget(self.status7)
-        self.horizon_bottom_left_layout_RESP.addStretch(0)
+        self.horizon_bottom_left_layout_RESP.addWidget(self.RESP_graph)
+        # self.horizon_bottom_left_layout_RESP.addStretch(0)
         self.vertical_bottom_layout.addLayout(self.horizon_bottom_left_layout_RESP)
 
         # set the whole layout
         self.vertical_layout.addLayout(self.horizon_top_layout)
-        self.vertical_layout.addStretch(0)
+        # self.vertical_layout.addStretch(0)
+        self.vertical_layout.addLayout(self.horizon_bottom_top_layout_value)
+        # self.vertical_layout.addStretch(0)
         self.vertical_layout.addLayout(self.vertical_bottom_layout)
 
     def add_button(self):
@@ -276,7 +274,7 @@ class MainWindow(QWidget):
 
         self.Acquire.clicked.connect(self.slot_acquire)
         self.CheckAndManage.clicked.connect(self.slot_data_manager)
-        self.Synchronize.clicked.connect(self.slot_data_sync)
+        self.Synchronize.clicked.connect(self.slot_get_ip)
         self.Log.clicked.connect(self.slot_log_check)
 
     def add_label(self):
@@ -403,7 +401,8 @@ class MainWindow(QWidget):
         :return: none
         """
 
-        self.acquire_win = BLE()
+        # self.acquire_win = BLE()
+        self.acquire_win = BLEwithBleak()
         self.acquire_win.show()
 
     def slot_data_manager(self):
@@ -423,8 +422,31 @@ class MainWindow(QWidget):
         open the data synchronizing window
         :return: none
         """
-        self.data_sync_win = Synchronize(self.user_unique)
+
+        self.data_sync_win = Synchronize(self.user_unique, self.ip_address)
         self.data_sync_win.show()
+
+    def slot_get_ip(self):
+
+        """
+        get the server's ip address
+        :return: none
+        """
+
+        self.getIP_win = GetIP()
+        self.getIP_win.show()
+        self.getIP_win.IP_address_edit.textChanged.connect(self.slot_set_ip)
+
+    def slot_set_ip(self, ip_address):
+
+        """
+        set the ip address
+        :return: none
+        """
+
+        self.ip_address = ip_address
+        print("ip: " + self.ip_address)
+        self.slot_data_sync()
 
     def slot_log_check(self):
 

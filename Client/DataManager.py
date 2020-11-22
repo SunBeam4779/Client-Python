@@ -46,23 +46,6 @@ class DataManager(QWidget):
         # self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.clicked.connect(self.select_item)
         self.set_table()
-        # # fake item
-        # check_item = QRadioButton()
-        # check_item.setFont(font_of_table)
-        # check_item.setText("Universal")
-        # self.table.setCellWidget(0, 0, check_item)
-        #
-        # item_time = QTableWidgetItem("20201020140521")
-        # self.table.setItem(0, 1, item_time)
-        #
-        # item_type = QTableWidgetItem("心率")
-        # self.table.setItem(0, 2, item_type)
-        #
-        # item_value = QTableWidgetItem("74")
-        # self.table.setItem(0, 3, item_value)
-        #
-        # item_checkable = QTableWidgetItem("No")
-        # self.table.setItem(0, 4, item_checkable)
 
         # set button
         self.check_data = QPushButton()
@@ -119,7 +102,7 @@ class DataManager(QWidget):
         # set text
         self.check_data.setText("查看")
         self.delete_data.setText("删除")
-        self.exit.setText("退出")
+        self.exit.setText("返回")
 
         self.check_data.setFixedSize(300, 150)
         self.delete_data.setFixedSize(300, 150)
