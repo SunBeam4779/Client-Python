@@ -1,22 +1,26 @@
+import asyncio
+
 from PyQt5.Qt import *
 from Client.Scanner import Scanner
-from Client.DataAcquire import DataAcquire
+# from Client.DataAcquire import DataAcquire
+from Client.DataAcquireWithBleak import DataAcquireWithBleak
+from bleak import discover
+
 # from bluepy import btle
 
 
-class BLE(QWidget):
+class BLEwithBleak(QWidget):
 
     _icon = ".\\docs\\20190702211158.jpg"
     _size_of_x = 600
     _size_of_y = 350
     _row = 0
-    _result_of_scan = {}
+    _result_of_scan = []
     _address = ""
     _peripheral = None
-    _connect_state = 'disc'
 
     def __init__(self):
-        super(BLE, self).__init__()
+        super(BLEwithBleak, self).__init__()
         self.data_acquire_win = None
 
         # set ICON
@@ -24,6 +28,9 @@ class BLE(QWidget):
 
         # set label
         self.StatusOfBLE = QLabel(self)
+
+        self.stop_ = None
+        self.BLE_handle = None
 
         # set status image
         self.status = QFrame(self)
@@ -36,7 +43,6 @@ class BLE(QWidget):
         self.Refresh = QPushButton()
         self.Search = QPushButton()
         self.Connect = QPushButton()
-        self.Disconnect = QPushButton()
         self.Acquire = QPushButton()
         self.Exit = QPushButton()
 
@@ -95,7 +101,6 @@ class BLE(QWidget):
         self.vertical_right_layout.addWidget(self.Refresh)
         self.vertical_right_layout.addWidget(self.Search)
         self.vertical_right_layout.addWidget(self.Connect)
-        self.vertical_right_layout.addWidget(self.Disconnect)
         self.vertical_right_layout.addWidget(self.Acquire)
         self.vertical_right_layout.addStretch(1)
         self.vertical_right_layout.addWidget(self.Exit)
@@ -119,28 +124,24 @@ class BLE(QWidget):
         self.Refresh.setFont(font_of_button)
         self.Search.setFont(font_of_button)
         self.Connect.setFont(font_of_button)
-        self.Disconnect.setFont(font_of_button)
         self.Acquire.setFont(font_of_button)
         self.Exit.setFont(font_of_button)
 
         self.Refresh.setText("刷新")
         self.Search.setText("搜索")
         self.Connect.setText("连接")
-        self.Disconnect.setText("断开")
         self.Acquire.setText("采集")
         self.Exit.setText("返回")
 
         self.Refresh.setFixedSize(300, 110)
         self.Search.setFixedSize(300, 110)
         self.Connect.setFixedSize(300, 110)
-        self.Disconnect.setFixedSize(300, 110)
         self.Acquire.setFixedSize(300, 110)
         self.Exit.setFixedSize(300, 110)
 
         self.Refresh.clicked.connect(self.slot_search_or_refresh)
         self.Search.clicked.connect(self.slot_search_or_refresh)
         self.Connect.clicked.connect(self.slot_connect)
-        self.Disconnect.clicked.connect(self.slot_disconnect)
         self.Acquire.clicked.connect(self.slot_acquire_data)
         self.Exit.clicked.connect(self.close_win)
 
@@ -159,6 +160,19 @@ class BLE(QWidget):
 
         self.StatusOfBLE.setText("蓝牙连接状态：")
 
+    @staticmethod
+    async def scan():
+        devices = await discover()
+        return devices
+
+    @staticmethod
+    def discover():
+        loop = asyncio.get_event_loop()
+        futures = asyncio.ensure_future(BLEwithBleak.scan())
+        loop.run_until_complete(futures)
+        devices = futures.result()
+        return devices
+
     def slot_search_or_refresh(self):
 
         """
@@ -166,9 +180,7 @@ class BLE(QWidget):
         :return: none
         """
 
-        # self.table.clearContents()
-        scanner = Scanner()
-        self._result_of_scan = scanner.scan()
+        self._result_of_scan = self.discover()
         self._row = len(self._result_of_scan)
         self.table.setRowCount(self._row)
         self.table.setHorizontalHeaderLabels(['名称', 'MAC'])
@@ -178,15 +190,14 @@ class BLE(QWidget):
         font.setFamily("Times")
         font.setPixelSize(20)
 
-        keys = list(self._result_of_scan.keys())
         # print(type(keys))
-        for index in range(len(keys)):
+        for index in range(len(self._result_of_scan)):
             name = QTableWidgetItem()
             mac = QTableWidgetItem()
             name.setFont(font)
             mac.setFont(font)
-            name.setText(str(keys[index]))
-            mac.setText(self._result_of_scan[keys[index]])
+            name.setText(self._result_of_scan[index].name)
+            mac.setText(self._result_of_scan[index].address)
 
             self.table.setItem(index, 0, name)
             self.table.setItem(index, 1, mac)
@@ -199,8 +210,8 @@ class BLE(QWidget):
         """
 
         row_index = self.table.currentIndex().row()
-        items = list(self._result_of_scan.keys())
-        self._address = self._result_of_scan[items[row_index]]
+        # items = list(self._result_of_scan.keys())
+        self._address = self._result_of_scan[row_index].address
 
     def slot_connect(self):
 
@@ -212,10 +223,10 @@ class BLE(QWidget):
         # self.data_acquire_win = DataAcquire(self._address)
         # self.data_acquire_win.show()
         # self._peripheral = btle.Peripheral()
-        self._peripheral._startHelper()
-        self._peripheral.connect(self._address)
-        self._connect_state = self._peripheral.getState()
-        self.change_BLE_state(self._connect_state)
+        # self._peripheral._startHelper()
+        # self._peripheral.connect(self._address)
+        # self.change_BLE_state()
+        self.slot_acquire_data()
 
     def slot_acquire_data(self):
 
@@ -224,7 +235,7 @@ class BLE(QWidget):
         :return: none
         """
 
-        self.data_acquire_win = DataAcquire(self._peripheral)
+        self.data_acquire_win = DataAcquireWithBleak(self._address)
         self.data_acquire_win.show()
 
     def change_BLE_state(self):
@@ -239,19 +250,6 @@ class BLE(QWidget):
         elif self._peripheral.getState() == 'disc':
             self.color.setRed(255)
         self.status.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
-
-    def slot_disconnect(self):
-
-        """
-        disconnect from the peripheral
-        :return: none
-        """
-
-        # self._peripheral._startHelper()
-
-        self._connect_state = 'disc'
-        self.change_BLE_state(self._connect_state)
-        self._peripheral.disconnect()
 
     def close_win(self):
 

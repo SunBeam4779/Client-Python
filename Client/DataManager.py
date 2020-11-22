@@ -46,23 +46,6 @@ class DataManager(QWidget):
         # self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.clicked.connect(self.select_item)
         self.set_table()
-        # # fake item
-        # check_item = QRadioButton()
-        # check_item.setFont(font_of_table)
-        # check_item.setText("Universal")
-        # self.table.setCellWidget(0, 0, check_item)
-        #
-        # item_time = QTableWidgetItem("20201020140521")
-        # self.table.setItem(0, 1, item_time)
-        #
-        # item_type = QTableWidgetItem("心率")
-        # self.table.setItem(0, 2, item_type)
-        #
-        # item_value = QTableWidgetItem("74")
-        # self.table.setItem(0, 3, item_value)
-        #
-        # item_checkable = QTableWidgetItem("No")
-        # self.table.setItem(0, 4, item_checkable)
 
         # set button
         self.check_data = QPushButton()

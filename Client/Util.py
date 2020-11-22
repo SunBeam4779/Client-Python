@@ -1,23 +1,18 @@
 # from bluepy import btle
-import datetime
-import time
+import re
 from binascii import b2a_hex
-import random
-from PyQt5.QtChart import QDateTimeAxis, QValueAxis, QSplineSeries, QChart, QChartView
-from PyQt5.QtGui import QPainter
-from PyQt5.QtCore import QDateTime, Qt, QTimer, QDate
 
 
-#
 # class MyDelegate(btle.DefaultDelegate):
 #
 #     """
 #     handle the notification from the BLE device
 #     """
 #
-#     def __init__(self, param):
+#     def __init__(self, signal):
 #         btle.DefaultDelegate.__init__(self)
-#         self.signal = param
+#         self.signal = signal
+#         self.count = 0
 #
 #     def handleNotification(self, cHandle, data):
 #         """
@@ -26,71 +21,145 @@ from PyQt5.QtCore import QDateTime, Qt, QTimer, QDate
 #         :param data: the notification
 #         :return: none
 #         """
-#         msg = str(b2a_hex(data))
-#         self.signal.emit(msg)
-#         # print("Received data: %s" % msg)
+#         if self.count < 3:
+#             self.count += 1
+#             pass
+#         else:
+#             msg = str(b2a_hex(data))[2:-1]
+#             # self.q.put(msg)
+#             self.signal.emit(msg)
+#             # if self.q.qsize() > 6:
+#             #     res = [self.q.get(), self.q.get(), self.q.get()]
+#             #     self.signal[str, str, str].emit(res[0], res[1], res[2])
+#         # print("Received data:")
 
 
-class ChartView(QChartView,QChart):
+class Splitter:
 
-    def __init__(self, *args, **kwargs):
-        super(ChartView, self).__init__(*args, **kwargs)
-        # 声明并初始化X轴，Y轴
-        self.vlaxisY = QValueAxis()
-        self.dtaxisX = QValueAxis()
-        self.series = QSplineSeries()
-        self.chart = QChart()
-        self.timer = QTimer(self)
-        self.resize(1800, 400)
-        self.setRenderHint(QPainter.Antialiasing)  # 抗锯齿
-        self.chart_init()
-        # self.timer_init()
+    """
+    handle the BLE string-type data splitting.
+    """
 
-    def timer_init(self):
-        # 使用QTimer
-        self.timer.timeout.connect(self.drawLine)
-        self.timer.start(100)
+    ori1 = []
+    ori2 = []
+    res1 = []
+    res2 = []
 
-    def chart_init(self):
-        # 设置曲线名称
-        # self.series.setName("实时数据")
-        # 把曲线添加到QChart的实例中
-        # self.chart.addSeries(self.series)
+    @staticmethod
+    def process_string(message):
 
-        # 设置坐标轴显示范围
-        self.dtaxisX.setMin(0)
-        self.dtaxisX.setMax(1500)
-        self.vlaxisY.setMin(-3)
-        self.vlaxisY.setMax(3)
-        # 设置X轴时间样式
-        # self.dtaxisX.setFormat("MM月dd hh:mm:ss")
-        # 设置坐标轴上的格点
-        self.dtaxisX.setTickCount(10)
-        self.vlaxisY.setTickCount(5)
-        # 设置坐标轴名称
-        self.dtaxisX.setTitleText("时间/s")
-        self.vlaxisY.setTitleText("电压/mV")
-        # 设置网格不显示
-        self.vlaxisY.setGridLineVisible(False)
-        # 把坐标轴添加到chart中
-        self.chart.addAxis(self.dtaxisX, Qt.AlignBottom)
-        self.chart.addAxis(self.vlaxisY, Qt.AlignLeft)
-        # 把曲线关联到坐标轴
-        self.series.attachAxis(self.dtaxisX)
-        self.series.attachAxis(self.vlaxisY)
+        """
+        process the string of BLE data, to get the essential message.
+        :param message:
+        :return: none
+        """
 
-        self.setChart(self.chart)
+        # count = 0
+        # data = ""
+        # length = 6
+        target = 72
+        # head = 0
+        # items = ""
 
-    def drawLine(self):
-        # 获取当前时间
-        bjtime = QDateTime.currentDateTime()
-        # 更新X轴坐标
-        self.dtaxisX.setMin(QDateTime.currentDateTime().addSecs(-20*1))
-        self.dtaxisX.setMax(QDateTime.currentDateTime().addSecs(0))
-        # 当曲线上的点超出X轴的范围时，移除最早的点
-        if self.series.count() > 200:
-            self.series.removePoints(0, self.series.count()-200)
-        # 产生随即数
-        yint = random.randint(0, 1500)
-        # 添加数据到曲线末端
-        self.series.append(bjtime.toMSecsSinceEpoch(), yint)
+        # for i in range(length):
+        # message = messages.get()
+        # count += 1
+        # cut_head = message.split(":")[-1]
+        # lower = cut_head.lower()
+        # essence = lower.split("\"")[1]
+        # string = "".join(essence)
+        # data += string
+        data1 = re.split("c0c0", message)
+        item = "".join(data1[1:-1])
+        if len(data1[0]) == len(data1[-1]) == 10:
+            data1[0] = data1[0][2:]
+            data1[-1] = data1[-1][:-2]
+            item1 = data1[0] + item
+            item = item1 + data1[-1]
+            target = 80
+        # data = item.split(" ")
+        # data = "".join(data)
+        # data = data.split(" ")
+        # data = "".join(data)
+        if len(item) == target:
+            Splitter.ori1, Splitter.ori2, Splitter.res1, Splitter.res2 = Splitter.switch_form(item)
+            # print(Splitter.res2[0])
+            # return ori1, ori2, ans1, ans2
+            # data = ""
+
+    @staticmethod
+    def two_complement(value, bits):
+
+        """
+        handle the two's complement data
+        :param value:
+        :param bits:
+        :return: processed result
+        """
+
+        if value >= 2 ** bits:
+            raise ValueError("Value: {} out of range of {}-bit value.".format(value, bits))
+        else:
+            return value - int((value << 1) & 2 ** bits)
+
+    @staticmethod
+    def get_dec(channel1, channel2):
+
+        """
+        switch from hex to dec
+        :param channel1:
+        :param channel2:
+        :return: decimal result
+        """
+
+        res = int(channel1, 16)
+        bits_width = 24
+        r_e1 = Splitter.two_complement(res, bits_width)
+
+        res = int(channel2, 16)
+        bits_width = 24
+        r_e2 = Splitter.two_complement(res, bits_width)
+        return r_e1, r_e2
+
+    @staticmethod
+    def switch_form(string):
+
+        """
+        get the original data and final result of two channels
+        :param string:
+        :return: processed result
+        """
+
+        original_channel1 = []
+        original_channel2 = []
+        final1 = []
+        final2 = []
+        length = len(string)
+        i = 0
+        while i < length:
+            result1 = '0x'
+            result1 = result1 + ''.join(string[i])
+            result1 = result1 + ''.join(string[i + 1])
+            result1 = result1 + ''.join(string[i + 2])
+            result1 = result1 + ''.join(string[i + 3])
+            result1 = result1 + ''.join("00")
+
+            result2 = '0x'
+            result2 = result2 + ''.join(string[i + 4])
+            result2 = result2 + ''.join(string[i + 5])
+            result2 = result2 + ''.join(string[i + 6])
+            result2 = result2 + ''.join(string[i + 7])
+            result2 = result2 + ''.join("00")
+
+            i += 8
+
+            original_channel1.append(result1)
+            original_channel2.append(result2)
+            value1, value2 = Splitter.get_dec(result1, result2)
+            final1.append(value1)
+            final2.append(value2)
+            # self.result1.put(value1)
+            # self.result2.put(value2)
+            # print(result1)
+            # print(result2)
+        return original_channel1, original_channel2, final1, final2

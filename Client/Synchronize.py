@@ -1,5 +1,6 @@
 import pymysql
 from PyQt5.Qt import *
+from Client.GetIP import GetIP
 
 
 class Synchronize(QWidget):
@@ -10,11 +11,13 @@ class Synchronize(QWidget):
     _data_path = "not defined"
     _data_type = "not defined"
     _item_row = None
+    _ip_address = ""
 
-    def __init__(self, unique_id):
+    def __init__(self, unique_id, ip_address):
         super(Synchronize, self).__init__()
 
         self.user_unique = unique_id
+        self._ip_address = ip_address
         self.items = self.to_be_synchronized()
 
         # set Icon
@@ -142,6 +145,8 @@ class Synchronize(QWidget):
         # print(self._data_path)
 
     def to_be_synchronized(self):
+        if self.user_unique == "not defined":
+            return []
         db = pymysql.connect(host='localhost', user='root', password='root', db='user')
         # cursor = db.cursor()
         try:

@@ -4,10 +4,12 @@ import os
 from PyQt5 import QtWidgets
 from PyQt5.Qt import *
 from Client.BLE import BLE
+from Client.BLEwithBleak import BLEwithBleak
 from Client.DataManager import DataManager
 from Client.Synchronize import Synchronize
 from Client.LogManager import LogManager
-# from Client.Util import ChartView
+from Client.GetIP import GetIP
+
 import pyqtgraph as pg
 import numpy as np
 from pyqtgraph import GraphicsLayoutWidget
@@ -35,6 +37,7 @@ class MainWindow(QWidget):
         self.profile = "./docs/20190702211158.jpg"
         self.get_user_info(user)
         self.profile = self.get_user_profile(self.user_unique)
+        self.ip_address = "not defined"
 
         # make directories for user
         self.make_user_dir()
@@ -47,6 +50,7 @@ class MainWindow(QWidget):
         self.data_manager_win = None
         self.data_sync_win = None
         self.log_win = None
+        self.getIP_win = None
 
         # set label
         self.gender = QLabel(self)
@@ -63,9 +67,6 @@ class MainWindow(QWidget):
         self.PulseWave = QLabel(self)
         self.Respiration = QLabel(self)
         self.Video = QLabel(self)
-
-        # split line
-        # self.splitter =
 
         # set data graph
         pg.setConfigOption('background', '#f0f0f0')
@@ -273,7 +274,7 @@ class MainWindow(QWidget):
 
         self.Acquire.clicked.connect(self.slot_acquire)
         self.CheckAndManage.clicked.connect(self.slot_data_manager)
-        self.Synchronize.clicked.connect(self.slot_data_sync)
+        self.Synchronize.clicked.connect(self.slot_get_ip)
         self.Log.clicked.connect(self.slot_log_check)
 
     def add_label(self):
@@ -400,7 +401,8 @@ class MainWindow(QWidget):
         :return: none
         """
 
-        self.acquire_win = BLE()
+        # self.acquire_win = BLE()
+        self.acquire_win = BLEwithBleak()
         self.acquire_win.show()
 
     def slot_data_manager(self):
@@ -420,8 +422,31 @@ class MainWindow(QWidget):
         open the data synchronizing window
         :return: none
         """
-        self.data_sync_win = Synchronize(self.user_unique)
+
+        self.data_sync_win = Synchronize(self.user_unique, self.ip_address)
         self.data_sync_win.show()
+
+    def slot_get_ip(self):
+
+        """
+        get the server's ip address
+        :return: none
+        """
+
+        self.getIP_win = GetIP()
+        self.getIP_win.show()
+        self.getIP_win.IP_address_edit.textChanged.connect(self.slot_set_ip)
+
+    def slot_set_ip(self, ip_address):
+
+        """
+        set the ip address
+        :return: none
+        """
+
+        self.ip_address = ip_address
+        print("ip: " + self.ip_address)
+        self.slot_data_sync()
 
     def slot_log_check(self):
 
