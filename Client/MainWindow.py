@@ -401,8 +401,8 @@ class MainWindow(QWidget):
         :return: none
         """
 
-        # self.acquire_win = BLE()
-        self.acquire_win = BLEwithBleak()
+        self.acquire_win = BLE()
+        # self.acquire_win = BLEwithBleak()
         self.acquire_win.show()
 
     def slot_data_manager(self):
