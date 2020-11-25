@@ -4,9 +4,11 @@ import time
 from PyQt5.Qt import *
 # from Client.Util import MyDelegate
 from Client.Util import Splitter
+from Client.Util import SignalProcess
 # from bluepy import btle
 from queue import Queue
 import pyqtgraph as pg
+import numpy as np
 
 
 class DataAcquire(QWidget):
@@ -15,6 +17,9 @@ class DataAcquire(QWidget):
     _size_of_y = 600
     # _address = ""
     _peripheral = None
+    user_unique = "not defined"
+    data_type = "not defined"
+    two_channel = False
     q = None
     result1 = []
     result2 = []
@@ -22,35 +27,42 @@ class DataAcquire(QWidget):
     display2 = None
     original1 = []
     original2 = []
-    ECG_data = [0 for i in range(500)]
+    display_channel1 = [0 for i in range(500)]
+    display_channel2 = [0 for j in range(500)]
+    curve_channel1 = None
+    curve_channel2 = None
+    pointer_channel1 = 0
+    pointer_channel2 = 0
 
-    def __init__(self, peripheral):
+    def __init__(self, peripheral, user_unique, data_type):
         super(DataAcquire, self).__init__()
 
         # self._address = address
         self._peripheral = peripheral
+        self.user_unique = user_unique
+        self.data_type = data_type
 
-        # set ICON
+        # //-set ICON
         self.Icon = QIcon(self._icon)
 
-        # queue
+        # //-queue
         self.q = Queue()
         self.display1 = Queue()
         self.display2 = Queue()
 
-        # set choice
+        # //-set choice
         self.ECG = QLabel()
         self.SpO2 = QLabel()
         self.Respiration = QLabel()
         self.PulseWave = QLabel()
 
-        # set button
+        # //-set button
         self.save = QPushButton()
         self.clear = QPushButton()
         self.receive = QPushButton()
         self.exit = QPushButton()
 
-        # set Text Edit
+        # //-set Text Edit
         font_of_data = QFont()
         font_of_data.setFamily("Times")
         font_of_data.setPixelSize(20)
@@ -63,9 +75,9 @@ class DataAcquire(QWidget):
         # self.PulseWaveWin = QTextEdit()
         # self.PulseWaveWin.setFont(font_of_data)
 
-        # set data graph
-        pg.setConfigOption('background', 'w')  # #f0f0f0
-        pg.setConfigOption('foreground', 'k')
+        # //-set data graph
+        pg.setConfigOption('background', 'k')  # #f0f0f0
+        pg.setConfigOption('foreground', 'w')
         pg.setConfigOptions(antialias=True)
 
         self.ECGWin = pg.GraphicsLayoutWidget(self)
@@ -74,17 +86,16 @@ class DataAcquire(QWidget):
         self.PulseWaveWin = pg.GraphicsLayoutWidget(self)
         # self.ECGWin.setXRange(self, )
 
-        # pen = pg.mkPen(color='r', width=2)
         self.pen = pg.mkPen(color='r', width=2)  # (200, 200, 255)
-        self.ECGWinHandle = self.ECGWin.addPlot(pen=pg.mkPen(color='b', width=2))
+        self.ECGWinHandle = self.ECGWin.addPlot()
         # self.SpO2WinHandle = self.SpO2Win.addPlot()
         self.RespirationWinHandle = self.RespirationWin.addPlot()
         self.PulseWaveWinHandle = self.PulseWaveWin.addPlot()
 
-        self.curveECG = self.PulseWaveWinHandle.plot(self.ECG_data, pen=self.pen)
-        self.ECG_pointer = 0
+        # self.curve_channel1, self.curve_channel2 = self.PulseWaveWinHandle.plot(self.display_channel2, pen=self.pen)
+        self.type_determine()
 
-        # set layout
+        # //-set layout
         self.horizon_layout = QHBoxLayout()
         self.vertical_left_layout = QVBoxLayout()
         self.vertical_right_layout = QVBoxLayout()
@@ -103,7 +114,7 @@ class DataAcquire(QWidget):
         self.timer.timeout.connect(self.slot_display)
         # self.plotter = Plotter(self.curveECG, self.ECG_data, self.display1, self.display2)
 
-        # set ui
+        # //-set ui
         self.add_button_and_label()
         self.set_ui()
         # self.start()
@@ -121,7 +132,7 @@ class DataAcquire(QWidget):
         self.setWindowState(Qt.WindowMaximized)
         # self.resize(self._size_of_x, self._size_of_y)
 
-        # set left
+        # //-set left
         self.horizon_left_layout1.addWidget(self.ECG)
         self.horizon_left_layout1.addWidget(self.ECGWin)
         self.horizon_left_layout2.addWidget(self.Respiration)
@@ -141,7 +152,7 @@ class DataAcquire(QWidget):
         # self.vertical_left_layout.addLayout(self.horizon_left_layout4)
         # self.vertical_left_layout.addStretch(1)
 
-        # set right
+        # //-set right
         # self.vertical_right_layout.addStretch(1)
         self.vertical_right_layout.addWidget(self.save)
         self.vertical_right_layout.addWidget(self.clear)
@@ -150,7 +161,7 @@ class DataAcquire(QWidget):
         self.vertical_right_layout.addWidget(self.exit)
         # self.vertical_right_layout.addStretch(1)
 
-        # set layout
+        # //-set layout
         # self.horizon_layout.addStretch(0)
         self.horizon_layout.addLayout(self.vertical_left_layout)
         # self.horizon_layout.addStretch(0)
@@ -172,13 +183,13 @@ class DataAcquire(QWidget):
         font_of_button.setFamily("Times")
         font_of_button.setPixelSize(55)
 
-        # label
+        # //-label
         self.ECG.setFont(font_of_label)
         self.SpO2.setFont(font_of_label)
         self.PulseWave.setFont(font_of_label)
         self.Respiration.setFont(font_of_label)
 
-        # button
+        # //-button
         self.save.setFixedSize(240, 120)
         self.save.setFont(font_of_button)
         self.clear.setFixedSize(240, 120)
@@ -201,6 +212,17 @@ class DataAcquire(QWidget):
         self.clear.clicked.connect(self.slot_clear)
         self.receive.clicked.connect(self.slot_receive)
         self.exit.clicked.connect(self.close_win)
+
+    def type_determine(self):
+
+        if self.data_type == "ECG" or self.data_type == "ENR":
+            self.curve_channel2 = self.ECGWinHandle.plot(self.display_channel2, pen=self.pen)
+            self.curve_channel1 = self.RespirationWinHandle.plot(self.display_channel1, pen=self.pen)
+            self.two_channel = True
+        else:
+            self.curve_channel2 = self.PulseWaveWinHandle.plot(self.display_channel2, pen=self.pen)
+            self.curve_channel1 = None
+            self.two_channel = False
 
     def slot_stop(self):
 
@@ -254,11 +276,22 @@ class DataAcquire(QWidget):
         :return: none
         """
 
+        data_processor = SignalProcess()
+        data_processor.setter(self.result2)
+        data_processor.execute()
+        ori2, result2 = data_processor.getter()
+        data_processor.setter(self.result1)
+        data_processor.execute()
+        ori1, result1 = data_processor.getter()
+
+        result1 = result1.reshape(len(result1), 1)
+        result2 = result2.reshape(len(result2), 1)
+
         self.setter.working = False
-        string = self.dataWin.toPlainText()
-        file_log = open('./docs/output.txt', 'w')
-        file_log.write(string)
-        file_log.close()
+        self.getter.working = False
+        self.timer.stop()
+        np.savetxt('./docs/output1.txt', result1)
+        np.savetxt('./docs/output2.txt', result2)
 
     def slot_display(self):
 
@@ -267,49 +300,52 @@ class DataAcquire(QWidget):
         :return: none
         """
 
-        # temp1 = message['res1']
-        # temp2 = message['res2']
+        if self.two_channel:
+            # ticks1 = time.time()
+            size = self.display2.qsize()
+            # print(size)
+            if size > 0:
+                data1 = self.display1.get()
+                data2 = self.display2.get()
+                length = len(data1)
 
-        # print(len(self.result2))
-        # print(temp2[0])
-        # length = len(temp2)
-        ticks1 = time.time()
-        size = self.display2.qsize()
-        print(size)
-        if size > 0:  # 6
-            data1 = self.display2.get()
-            # data2 = self.display2.get()
-            # data3 = self.display2.get()
-            # data4 = self.display2.get()
-            # data5 = self.display2.get()
-            # data6 = self.display2.get()
-            length = len(data1)
+                # //-the length of the data to be plot must be larger than 0,
+                # //-or the display window will be shorten into 9.
+                if length > 0:
+                    self.display_channel1[:-length] = self.display_channel1[length:]
+                    self.display_channel1[-length:] = data1
+                    self.display_channel2[:-length] = self.display_channel2[length:]
+                    self.display_channel2[-length:] = data2
+                    # print(length)
 
-            # the length of the data to be plot must be larger than 0, or the display window will be shorten into 9.
-            if length > 0:
-                # if self.display2.qsize() > 0:
-                self.ECG_data[:-length] = self.ECG_data[length:]
-                self.ECG_data[-length:] = data1
-                # self.ECG_data[-5] = data2
-                # self.ECG_data[-4] = data3
-                # self.ECG_data[-3] = data4
-                # self.ECG_data[-2] = data5
-                # self.ECG_data[-1] = data6
-                # print(length)
+                    self.pointer_channel1 += length
+                    self.curve_channel1.setData(self.display_channel1)
+                    self.curve_channel1.setPos(self.pointer_channel1, 0)
+                    self.pointer_channel2 += length
+                    self.curve_channel2.setData(self.display_channel1)
+                    self.curve_channel2.setPos(self.pointer_channel2, 0)
+            # ticks2 = time.time()
+            # print(1000 * (ticks2 - ticks1))
+        else:
+            # ticks1 = time.time()
+            size = self.display2.qsize()
+            # print(size)
+            if size > 0:
+                data1 = self.display2.get()
+                length = len(data1)
 
-                self.ECG_pointer += length
-                self.curveECG.setData(self.ECG_data)
-                self.curveECG.setPos(self.ECG_pointer, 0)
-        ticks2 = time.time()
-        print(1000 * (ticks2 - ticks1))
-        # self.result1.extend(temp1)
-        # self.result2.extend(temp2)
-        # self.original1.extend(message['ori1'])
-        # self.original2.extend(message['ori2'])
+                # //-the length of the data to be plot must be larger than 0,
+                # //-or the display window will be shorten into 9.
+                if length > 0:
+                    self.display_channel2[:-length] = self.display_channel2[length:]
+                    self.display_channel2[-length:] = data1
+                    # print(length)
 
-        # for index in range(length):
-        #     self.display1.put(temp1[index])
-        #     self.display2.put(temp2[index])
+                    self.pointer_channel2 += length
+                    self.curve_channel2.setData(self.display_channel2)
+                    self.curve_channel2.setPos(self.pointer_channel2, 0)
+            # ticks2 = time.time()
+            # print(1000 * (ticks2 - ticks1))
 
     def close_win(self):
 
@@ -326,6 +362,11 @@ class DataAcquire(QWidget):
 
 
 class Setter(QThread):
+
+    """
+    to get the bluetooth characteristics, send them as a signal to another thread.
+    """
+
     sinOut = pyqtSignal(str)
     peripheral = None
 
@@ -355,6 +396,11 @@ class Setter(QThread):
 
 
 class Getter(QThread):
+
+    """
+    get the bluetooth data from the signal, put them into the queue and do some preprocess.
+    """
+
     sigOut = pyqtSignal(dict)
     working = True
 
@@ -370,22 +416,37 @@ class Getter(QThread):
         self.split = Splitter()
 
     def get(self, msg):
+
+        """
+        put the data into queue
+        :param msg:
+        :return: none
+        """
+
         # print("get")
         self.q.put(msg)
 
     def run(self):
+
+        """
+        process the data which is the string type to get the essential content.
+        :return:
+        """
+
         while self.working:
             if self.q.qsize() >= 3:
                 message = self.q.get()
                 message += self.q.get()
                 message += self.q.get()
-                # print(self.display2.qsize())
+                # print(self.q.qsize())
 
                 # original1 = []
                 # original2 = []
                 # res1 = []
                 # res2 = []
                 # ticks1 = time.time()
+
+                # //-process the data use Util.Splitter
                 self.split.process_string(message, self.ori1, self.ori2, self.final1,
                                           self.final2, self.display1, self.display2)
                 # ticks2 = time.time()
@@ -412,7 +473,7 @@ class Getter(QThread):
                 #     #     self.display2.put(res2[index])
 
 
-# Ignore it. This class is never used.
+# //-Ignore it. This class is never used.
 class Plotter(QThread):
     # sigOut = pyqtSignal(dict)
     working = True
@@ -435,7 +496,8 @@ class Plotter(QThread):
                 signal = self.display2.get()
                 length = len(signal)
 
-                # the length of the data to be plot must be larger than 0, or the display window will be shorten into 9.
+                # //-the length of the data to be plot must be larger than 0,
+                # //-or the display window will be shorten into 9.
                 if length > 0:
                     self.data[:-length] = self.data[length:]
                     self.data[-length:] = signal

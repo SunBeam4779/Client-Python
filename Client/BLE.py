@@ -13,11 +13,15 @@ class BLE(QWidget):
     _result_of_scan = {}
     _address = ""
     _peripheral = None
+    _user_unique = "not defined"
     _connect_state = 'disc'
+    _data_type = "not defined"
 
-    def __init__(self):
+    def __init__(self, user_unique):
         super(BLE, self).__init__()
         self.data_acquire_win = None
+
+        self._user_unique = user_unique
 
         # set ICON
         self.Icon = QIcon(self._icon)
@@ -201,6 +205,8 @@ class BLE(QWidget):
         row_index = self.table.currentIndex().row()
         items = list(self._result_of_scan.keys())
         self._address = self._result_of_scan[items[row_index]]
+        self._data_type = str(items[row_index])[-3:]
+        # print(self._data_type)
 
     def slot_connect(self):
 
@@ -215,7 +221,7 @@ class BLE(QWidget):
         self._peripheral._startHelper()
         self._peripheral.connect(self._address)
         self._connect_state = self._peripheral.getState()
-        self.change_BLE_state(self._connect_state)
+        self.change_BLE_state()
 
     def slot_acquire_data(self):
 
@@ -224,7 +230,7 @@ class BLE(QWidget):
         :return: none
         """
 
-        self.data_acquire_win = DataAcquire(self._peripheral)
+        self.data_acquire_win = DataAcquire(self._peripheral, self._user_unique, self._data_type)
         self.data_acquire_win.show()
 
     def change_BLE_state(self):
@@ -234,9 +240,9 @@ class BLE(QWidget):
         :return: none
         """
 
-        if self._peripheral.getState() == 'conn':
+        if self._connect_state == 'conn':
             self.color.setGreen(255)
-        elif self._peripheral.getState() == 'disc':
+        elif self._connect_state == 'disc':
             self.color.setRed(255)
         self.status.setStyleSheet('QWidget { background-color:%s }' % self.color.name())
 
@@ -250,8 +256,8 @@ class BLE(QWidget):
         # self._peripheral._startHelper()
 
         self._connect_state = 'disc'
-        self.change_BLE_state(self._connect_state)
         self._peripheral.disconnect()
+        self.change_BLE_state()
 
     def close_win(self):
 

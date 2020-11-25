@@ -401,7 +401,7 @@ class MainWindow(QWidget):
         :return: none
         """
 
-        self.acquire_win = BLE()
+        self.acquire_win = BLE(self.user_unique)
         # self.acquire_win = BLEwithBleak()
         self.acquire_win.show()
 
