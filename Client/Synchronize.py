@@ -1,6 +1,5 @@
 import pymysql
 from PyQt5.Qt import *
-from Client.GetIP import GetIP
 
 
 class Synchronize(QWidget):
@@ -11,13 +10,15 @@ class Synchronize(QWidget):
     _data_path = "not defined"
     _data_type = "not defined"
     _item_row = None
-    _ip_address = ""
+    _ip_address = "not defined"
+    _ip_port = "not defined"
 
-    def __init__(self, unique_id, ip_address):
+    def __init__(self, unique_id, ip_address, ip_port):
         super(Synchronize, self).__init__()
 
         self.user_unique = unique_id
         self._ip_address = ip_address
+        self._ip_port = ip_port
         self.items = self.to_be_synchronized()
 
         # set Icon
@@ -108,6 +109,7 @@ class Synchronize(QWidget):
         self.user_sync.setText("用户同步")
         self.exit.setText("退出")
 
+        self.user_sync.clicked.connect(self.slot_user_sync)
         self.exit.clicked.connect(self.closeWin)
 
     def set_table(self):
@@ -165,6 +167,34 @@ class Synchronize(QWidget):
             print("get non-synchronized data fail" + e.__str__())
 
         return result
+
+    def slot_user_sync(self):
+
+        """
+        send the user information to server
+        :return: none
+        """
+
+        if self.user_unique == "not defined":
+            return
+
+        db = None
+        try:
+            db = pymysql.connect(host='localhost', user='root', password='root', db='user')
+        except Exception as e:
+            print("database connection wrong" + e.__str__())
+
+        result = None
+        try:
+            sql = "select * from userinfo where unique_id=%s;" % self.user_unique
+            cursor = db.cursor()
+            cursor.execute(sql)
+            result = cursor.fetchall()
+        except Exception as e:
+            print("get non-synchronized data fail" + e.__str__())
+
+        userinfo = result[0] + result[1] + result[2] + result[3] + result[4] + result[5] + result[6] + result[7]
+        return userinfo
 
     def closeWin(self):
         self.close()

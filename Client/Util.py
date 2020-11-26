@@ -2,12 +2,14 @@ import math
 
 # from bluepy import btle
 import re
-from binascii import b2a_hex
+# from binascii import b2a_hex
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QWidget, QDesktopWidget
 from scipy.signal import butter, firwin, ellipord, ellip, sosfilt, savgol_filter
+import socket
+import threading
 
 
 # class MyDelegate(btle.DefaultDelegate):
@@ -311,11 +313,11 @@ class SignalProcess:
     def _base_line(self):
         if len(self.raw) != 0:
             wp = 1.5 * 2 / 512
-            ws = 0.2 * 2 / 512
+            ws_ = 0.2 * 2 / 512
             devel = 0.005
             rp = 20 * math.log10((1 + devel) / (1 - devel))
             rs = 20
-            n, wn = ellipord(wp, ws, rp, rs, True)
+            n, wn = ellipord(wp, ws_, rp, rs, True)
             sos = ellip(n, rp, rs, wn, 'high', output='sos')
             res = sosfilt(sos, self.raw)
             return res
@@ -340,6 +342,75 @@ class SignalProcess:
         return self.raw, self.final_data
 
 
+class Caller:
+
+    """
+    handle the socket communication with remote server
+    """
+
+    signal = pyqtSignal(str)
+    _tcp_socket = None
+    _server_address = None
+    _server_port = None
+    _message = None
+
+    def __init__(self, address, port):
+        self._server_address = address
+        self._server_port = port
+        self.client_thread = None
+        self._tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def setter(self, message):
+        self._message = message
+
+    def client_send(self):
+        address = (self._server_address, self._server_port)
+        try:
+            self._tcp_socket.connect(address)
+        except Exception as ret:
+            self.signal.emit(ret.__str__())
+        else:
+            self.client_thread = threading.Thread(target=self.tcp_client_send_concurrency)
+            self.client_thread.start()
+
+    def tcp_client_send_concurrency(self):
+
+        """
+        create the client sending sub thread
+        :return:
+        """
+
+        while True:
+            # received_msg = self._tcp_socket.recv(1024)
+            self._tcp_socket.send(self._message.encode('utf-8'))
+
+            self._tcp_socket.close()
+
+    def client_receive(self):
+        address = (self._server_address, self._server_port)
+        try:
+            self._tcp_socket.connect(address)
+        except Exception as ret:
+            self.signal.emit(ret.__str__())
+        else:
+            self.client_thread = threading.Thread(target=self.tcp_client_receive_concurrency)
+            self.client_thread.start()
+
+    def tcp_client_receive_concurrency(self):
+
+        """
+        create the client receiving sub thread
+        :return:
+        """
+
+        while True:
+            received_msg = self._tcp_socket.recv(1024)
+            if received_msg:
+                self._tcp_socket.send(self._message.encode('utf-8'))
+
+            self._tcp_socket.close()
+
+
 class Type:
     _type = {'ECG': "心电",
              'RESP': "呼吸",
@@ -352,3 +423,20 @@ class Type:
     @staticmethod
     def get_type(type_):
         return Type._type[type_]
+
+
+class Encoding:
+
+    _coding = {
+        'ECG': '0000',
+        'RESP': '0001',
+        'PULSE': '0002',
+        'HR': '0003',
+        'RESPR': '0004',
+        'SPO2': '0005',
+        'BP': '0006'
+    }
+
+    @staticmethod
+    def encode(message):
+        return Encoding._coding[message]

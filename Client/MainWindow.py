@@ -39,6 +39,7 @@ class MainWindow(QWidget):
         self.get_user_info(user)
         self.profile = self.get_user_profile(self.user_unique)
         self.ip_address = "not defined"
+        self.port = "not defined"
 
         # make directories for user
         self.make_user_dir()
@@ -508,7 +509,7 @@ class MainWindow(QWidget):
         :return: none
         """
 
-        self.data_sync_win = Synchronize(self.user_unique, self.ip_address)
+        self.data_sync_win = Synchronize(self.user_unique, self.ip_address, self.port)
         self.data_sync_win.show()
 
     def slot_get_ip(self):
@@ -519,18 +520,19 @@ class MainWindow(QWidget):
         """
 
         self.getIP_win = GetIP()
+        self.getIP_win.signal.connect(self.slot_set_ip)
         self.getIP_win.show()
-        self.getIP_win.IP_address_edit.textChanged.connect(self.slot_set_ip)
 
-    def slot_set_ip(self, ip_address):
+    def slot_set_ip(self, message):
 
         """
         set the ip address
         :return: none
         """
 
-        self.ip_address = ip_address
-        print("ip: " + self.ip_address)
+        self.ip_address = message['ip']
+        self.port = message['port']
+        print("ip: " + self.ip_address + " port: " + self.port)
         self.slot_data_sync()
 
     def slot_log_check(self):
