@@ -6,6 +6,7 @@ from Client.DataAcquire import DataAcquire
 
 class BLE(QWidget):
 
+    signal = pyqtSignal(int)
     _icon = ".\\docs\\20190702211158.jpg"
     _size_of_x = 600
     _size_of_y = 350
@@ -266,4 +267,5 @@ class BLE(QWidget):
         :return: none
         """
 
+        self.signal.emit(1)
         self.close()

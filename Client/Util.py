@@ -338,3 +338,17 @@ class SignalProcess:
 
     def getter(self):
         return self.raw, self.final_data
+
+
+class Type:
+    _type = {'ECG': "心电",
+             'RESP': "呼吸",
+             'PULSE': "脉搏",
+             'HR': "心率",
+             'RESPR': "呼吸率",
+             'SPO2': "血氧",
+             'BP': "血压"}
+
+    @staticmethod
+    def get_type(type_):
+        return Type._type[type_]

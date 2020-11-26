@@ -1,10 +1,12 @@
+import time
+
 import pymysql
 import os
 
 from PyQt5 import QtWidgets
 from PyQt5.Qt import *
 from Client.BLE import BLE
-from Client.BLEwithBleak import BLEwithBleak
+# from Client.BLEwithBleak import BLEwithBleak
 from Client.DataManager import DataManager
 from Client.Synchronize import Synchronize
 from Client.LogManager import LogManager
@@ -16,7 +18,6 @@ from pyqtgraph import GraphicsLayoutWidget
 
 
 class MainWindow(QWidget):
-
     _icon = "./docs/20190702211158.jpg"
     _size_of_x = 800
     _size_of_y = 450
@@ -402,8 +403,92 @@ class MainWindow(QWidget):
         """
 
         self.acquire_win = BLE(self.user_unique)
+        self.acquire_win.signal.connect(self.update_data)
         # self.acquire_win = BLEwithBleak()
         self.acquire_win.show()
+
+    def update_data(self):
+
+        """
+        update the recently acquired data
+        :return: none
+        """
+
+        day = str(time.strftime("%Y%m%d", time.localtime()))
+        # set database
+        db = None
+        # cursor = None
+        try:
+            db = pymysql.connect(host='localhost', user='root', password='root', db='user')
+            # cursor = db.cursor()
+        except Exception as e:
+            print("database connection wrong" + e.__str__())
+
+        result = None
+        try:
+            cursor = db.cursor()
+            sql = "select * from userdata where (unique_id='%s' and date='%s') order by data_number" % \
+                  (self.user_unique_id, day)
+            cursor.execute(sql)
+            result = cursor.fetchall()
+        except Exception as e:
+            print("select data wrong" + e.__str__())
+
+        # //-get the data to display
+        # //-by the way, this part of code is definite a piece of shit.
+        # //-however, I cannot find a more decent way to go.
+        mark_ecg = False
+        mark_resp = False
+        mark_pulse = False
+        mark_hr = False
+        mark_respr = False
+        mark_spo2 = False
+        mark_bp = False
+        ecg_new = None
+        resp_new = None
+        pulse_new = None
+        hr_new = None
+        respr_new = None
+        spo2_new = None
+        bp_new = None
+        for i in range(len(result)):
+            if result[i][5] == "ECG" and mark_ecg is not True:
+                mark_ecg = True
+                ecg_new = np.loadtxt(result[i][6])
+            if result[i][5] == "RESP" and mark_resp is not True:
+                mark_resp = True
+                resp_new = np.loadtxt(result[i][6])
+            if result[i][5] == "PULSE" and mark_pulse is not True:
+                mark_pulse = True
+                pulse_new = np.loadtxt(result[i][6])
+            if result[i][5] == "HR" and mark_hr is not True:
+                mark_hr = True
+                hr_new = result[i][6]
+            if result[i][5] == "RESPR" and mark_respr is not True:
+                mark_respr = True
+                respr_new = result[i][6]
+            if result[i][5] == "SPO2" and mark_spo2 is not True:
+                mark_spo2 = True
+                spo2_new = result[i][6]
+            if result[i][5] == "BP" and mark_bp is not True:
+                mark_bp = True
+                bp_new = result[i][6]
+
+        if mark_ecg:
+            self.ECG_graph.addPlot(y=ecg_new, pen=pg.mkPen(color='b', width=2))
+        if mark_pulse:
+            self.Pulse_graph.addPlot(y=pulse_new, pen=pg.mkPen(color='b', width=2))
+        if mark_resp:
+            self.RESP_graph.addPlot(y=resp_new, pen=pg.mkPen(color='b', width=2))
+        if mark_hr:
+            self.valueOfHeartRate.setText(hr_new)
+        if mark_bp:
+            self.valueOfBloodPressure.setText(bp_new)
+        if mark_spo2:
+            self.valueOfSpO2.setText(spo2_new)
+        if mark_respr:
+            self.valueOfRespRate.setText(respr_new)
+        # //-THE shit is over.
 
     def slot_data_manager(self):
 
@@ -566,7 +651,7 @@ class MainWindow(QWidget):
         yes.setText("确定")
         no.setText("取消")
         question.exec_()
-        # when the main window is about to close, ask user to choose operation.
+        # //-when the main window is about to close, ask user to choose operation.
         if question.clickedButton() == yes:
             event.accept()
         else:

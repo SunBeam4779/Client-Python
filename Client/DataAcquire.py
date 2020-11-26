@@ -1,6 +1,8 @@
+import os
 import struct
 import time
 
+import pymysql
 from PyQt5.Qt import *
 # from Client.Util import MyDelegate
 from Client.Util import Splitter
@@ -19,6 +21,9 @@ class DataAcquire(QWidget):
     _peripheral = None
     user_unique = "not defined"
     data_type = "not defined"
+    channel1_type = "not defined"
+    channel2_type = "not defined"
+    start_time = "not defined"
     two_channel = False
     q = None
     result1 = []
@@ -219,10 +224,17 @@ class DataAcquire(QWidget):
             self.curve_channel2 = self.ECGWinHandle.plot(self.display_channel2, pen=self.pen)
             self.curve_channel1 = self.RespirationWinHandle.plot(self.display_channel1, pen=self.pen)
             self.two_channel = True
+            if self.data_type == "ECG":
+                self.channel1_type = "ECG"
+                self.channel2_type = "ECG"
+            else:
+                self.channel1_type = "RESP"
+                self.channel1_type = "ECG"
         else:
             self.curve_channel2 = self.PulseWaveWinHandle.plot(self.display_channel2, pen=self.pen)
             self.curve_channel1 = None
             self.two_channel = False
+            self.channel2_type = "PULSE"
 
     def slot_stop(self):
 
@@ -239,6 +251,8 @@ class DataAcquire(QWidget):
         the slot function to start notification receiving thread
         :return: none
         """
+
+        self.start_time = str(time.strftime("%Y%m%d%H%M%S", time.localtime()))
 
         self.setter.start()
         self.getter.start()
@@ -276,22 +290,97 @@ class DataAcquire(QWidget):
         :return: none
         """
 
-        data_processor = SignalProcess()
-        data_processor.setter(self.result2)
-        data_processor.execute()
-        ori2, result2 = data_processor.getter()
-        data_processor.setter(self.result1)
-        data_processor.execute()
-        ori1, result1 = data_processor.getter()
-
-        result1 = result1.reshape(len(result1), 1)
-        result2 = result2.reshape(len(result2), 1)
-
+        # //-stop the thread and timer
         self.setter.working = False
         self.getter.working = False
         self.timer.stop()
-        np.savetxt('./docs/output1.txt', result1)
-        np.savetxt('./docs/output2.txt', result2)
+
+        # //-get the user info
+        db = None
+        try:
+            db = pymysql.connect(host='localhost', user='root', password='root', db='user')
+        except Exception as e:
+            print("database connection wrong" + e.__str__())
+
+        result = None
+        try:
+            cursor = db.cursor()
+            sql = "select * from userinfo where unique_id='%s';" % self.user_unique_id
+            cursor.execute(sql)
+            result = cursor.fetchall()
+        except Exception as e:
+            print("select data wrong" + e.__str__())
+        username = result[0]
+        name = result[2]
+
+        # //-process data
+        data_processor = SignalProcess()
+        data_processor.setter(self.result2)
+        data_processor.execute()
+
+        # //-oriX means the data which not be remove the baseline
+        # //-resultX means the data which be smoothed and removed the baseline
+        # //-rawX means the data which not be filtered
+        ori2, result2 = data_processor.getter()
+        result2 = result2.reshape(len(result2), 1)
+        ori2 = ori2.reshape(len(ori2), 1)
+        raw2 = self.original2.reshape(len(self.original2), 1)
+
+        if self.two_channel:
+            data_processor.setter(self.result1)
+            data_processor.execute()
+            ori1, result1 = data_processor.getter()
+
+            result1 = result1.reshape(len(result1), 1)
+            ori1 = ori1.reshape(len(ori1), 1)
+            raw1 = self.original1.reshape(len(self.original1), 1)
+
+            raw_data1 = os.path.join(name + self.user_unique,
+                                     ("/" + self.channel1_type + "/original/raw_1" + self.start_time + ".txt"))
+            ori_data1 = os.path.join(name + self.user_unique,
+                                     ("/" + self.channel1_type + "/filtered/filtered_1" +
+                                      self.start_time + ".txt"))
+            final_data1 = os.path.join(name + self.user_unique,
+                                       ("/" + self.channel1_type + "/filtered/final_1" +
+                                        self.start_time + ".txt"))
+            np.savetxt(raw_data1, raw1)
+            np.savetxt(ori_data1, ori1)
+            np.savetxt(final_data1, result1)
+
+            try:
+                cursor = db.cursor()
+                cursor.execute("Insert into userdata(username, name, unique_id, data_number, date, "
+                               "data_type, value, checkable, synchronized) "
+                               "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" %
+                               (username, name, self.user_unique, "1" + self.start_time, self.start_time,
+                                self.data_type, final_data1, 'Yes', 'No'))
+                db.commit()
+            except Exception as e:
+                print("wrong!" + e.__str__())
+
+        raw_data2 = os.path.join(name + self.user_unique,
+                                 ("/" + self.channel2_type + "/original/raw_2" + self.start_time + ".txt"))
+        ori_data2 = os.path.join(name + self.user_unique,
+                                 ("/" + self.channel2_type + "/filtered/filtered_2" +
+                                  self.start_time + ".txt"))
+        final_data2 = os.path.join(name + self.user_unique,
+                                   ("/" + self.channel2_type + "/filtered/final_2" +
+                                    self.start_time + ".txt"))
+
+        np.savetxt(raw_data2, raw2)
+        np.savetxt(ori_data2, ori2)
+        np.savetxt(final_data2, result2)
+
+        try:
+            cursor = db.cursor()
+            cursor.execute("Insert into userdata(username, name, unique_id, data_number, date, "
+                           "data_type, value, checkable, synchronized) "
+                           "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" %
+                           (username, name, self.user_unique, "2" + self.start_time, self.start_time,
+                            self.data_type, final_data2, 'Yes', 'No'))
+            db.commit()
+        except Exception as e:
+            print("wrong!" + e.__str__())
 
     def slot_display(self):
 
@@ -322,7 +411,7 @@ class DataAcquire(QWidget):
                     self.curve_channel1.setData(self.display_channel1)
                     self.curve_channel1.setPos(self.pointer_channel1, 0)
                     self.pointer_channel2 += length
-                    self.curve_channel2.setData(self.display_channel1)
+                    self.curve_channel2.setData(self.display_channel2)
                     self.curve_channel2.setPos(self.pointer_channel2, 0)
             # ticks2 = time.time()
             # print(1000 * (ticks2 - ticks1))
@@ -358,11 +447,15 @@ class DataAcquire(QWidget):
         self.getter.working = False
         # self.plotter.working = False
         self.timer.stop()
+        self.display_channel1 = [0 for i in range(500)]
+        self.display_channel2 = [0 for j in range(500)]
+        self.ECGWinHandle.plot(self.display_channel2, pen=self.pen)
+        self.RespirationWinHandle.plot(self.display_channel1, pen=self.pen)
+        self.PulseWaveWinHandle.plot(self.display_channel2, pen=self.pen)
         self.close()
 
 
 class Setter(QThread):
-
     """
     to get the bluetooth characteristics, send them as a signal to another thread.
     """
@@ -396,7 +489,6 @@ class Setter(QThread):
 
 
 class Getter(QThread):
-
     """
     get the bluetooth data from the signal, put them into the queue and do some preprocess.
     """

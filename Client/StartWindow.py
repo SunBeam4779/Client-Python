@@ -213,8 +213,8 @@ class StartWindow(QWidget):
             connect.commit()
         except Exception as e:
             print(e.__str__())
-        sql3 = "CREATE TABLE IF NOT EXISTS USERDATA(username TEXT, name TEXT, " \
-               "unique_id TEXT, data_type TEXT, data TEXT);"
+        sql3 = "CREATE TABLE IF NOT EXISTS USERDATA(username TEXT, name TEXT, unique_id TEXT, data_number TEXT, " \
+               "date TEXT, data_type TEXT, value TEXT, checkable TEXT, synchronized TEXT);"
         try:
             cursor.execute(sql3)
             connect.commit()

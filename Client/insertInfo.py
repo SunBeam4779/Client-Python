@@ -41,10 +41,10 @@ def insert_data():
 
     cursor = connect.cursor()
     try:
-        cursor.execute("Insert into userdata(username, name, unique_id, data_number, "
+        cursor.execute("Insert into userdata(username, name, unique_id, data_number, date, "
                        "data_type, value, checkable, synchronized) "
                        "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" %
-                       ('universal', 'yuhang', '4131130301', '20201024141904',
+                       ('universal', 'yuhang', '4131130301', '20201024141904', '20201024'
                         'heart rate', '76', 'No', 'Yes'))
         connect.commit()
     except Exception as e:
