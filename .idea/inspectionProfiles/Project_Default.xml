@@ -13,6 +13,7 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="PyQt5.QtWidgets.clicked.connect" />
+          <option value="list.reshape" />
         </list>
       </option>
     </inspection_tool>

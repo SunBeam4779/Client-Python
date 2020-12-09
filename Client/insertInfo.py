@@ -1,7 +1,7 @@
 import pymysql
 
 """
-simple script the insert data into the database
+simple script to insert data into the database
 """
 
 path = "D:/python3/workspace/Client/Client/docs/202011061728.jpg"
@@ -41,11 +41,11 @@ def insert_data():
 
     cursor = connect.cursor()
     try:
-        cursor.execute("Insert into userdata(username, name, unique_id, data_number, "
-                       "data_type, value, checkable, synchronized) "
-                       "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" %
-                       ('universal', 'yuhang', '4131130301', '20201024141904',
-                        'heart rate', '76', 'No', 'Yes'))
+        cursor.execute("Insert into userdata(username, name, unique_id, data_number, date, "
+                       "data_type, value, checkable, synchronized)"
+                       "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" %
+                       ('universal', '杨宇航', '4131130301', '120201208141904', '20201208',
+                        'heart rate', '73', 'No', 'No'))
         connect.commit()
     except Exception as e:
         print("wrong!" + e.__str__())

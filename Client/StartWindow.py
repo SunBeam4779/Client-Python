@@ -193,7 +193,6 @@ class StartWindow(QWidget):
         :return: none
         """
 
-        # connect = sqlite3.connect('./data.db')
         connect = pymysql.connect(host='localhost', user='root', password='root', db='user')
 
         cursor = connect.cursor()
@@ -201,7 +200,10 @@ class StartWindow(QWidget):
         # REAL -> the float type
         # BIT ->  byte type
         sql1 = "CREATE TABLE IF NOT EXISTS USERINFO(username TEXT, password TEXT, " \
-               "name TEXT, identity_number TEXT, gender TEXT, room_number TEXT, enter_date TEXT, unique_id TEXT);"
+               "name TEXT, identity_number TEXT, gender TEXT, " \
+               "room_number TEXT, address TEXT, phone_number TEXT, " \
+               "cellphone TEXT, height TEXT, weight TEXT, " \
+               "history TEXT, enter_date TEXT, unique_id TEXT);"
         try:
             cursor.execute(sql1)
             connect.commit()
@@ -213,8 +215,8 @@ class StartWindow(QWidget):
             connect.commit()
         except Exception as e:
             print(e.__str__())
-        sql3 = "CREATE TABLE IF NOT EXISTS USERDATA(username TEXT, name TEXT, " \
-               "unique_id TEXT, data_type TEXT, data TEXT);"
+        sql3 = "CREATE TABLE IF NOT EXISTS USERDATA(username TEXT, name TEXT, unique_id TEXT, data_number TEXT, " \
+               "date TEXT, data_type TEXT, value TEXT, checkable TEXT, synchronized TEXT);"
         try:
             cursor.execute(sql3)
             connect.commit()
@@ -237,7 +239,6 @@ class StartWindow(QWidget):
         :return: none
         """
 
-        # connect = sqlite3.connect('./data.db')
         connect = pymysql.connect(host="localhost", user="root", password="root", db="user")
         cursor = connect.cursor()
         username = self.username_edit.text()
@@ -267,7 +268,7 @@ class StartWindow(QWidget):
 
             else:
                 QMessageBox.information(self, '错误！', '用户名或密码错误，请重试！', QMessageBox.Ok)
-        elif username:  # 如果用户名写了
+        elif username:
             QMessageBox.information(self, '错误！', '请输入密码！', QMessageBox.Ok)
         else:
             QMessageBox.information(self, '错误！', '请填写用户名和密码！', QMessageBox.Ok)

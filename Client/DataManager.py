@@ -1,6 +1,7 @@
 import numpy
 from PyQt5.Qt import *
 from Client.Display import Display
+from Client.Util import Type
 import pymysql
 
 
@@ -135,9 +136,9 @@ class DataManager(QWidget):
             check_item.setFont(font_of_table)
             check_item.setText(item[1])  # name
             item_time = QTableWidgetItem(item[3])  # data number
-            item_type = QTableWidgetItem(item[4])  # data type
-            item_value = QTableWidgetItem(item[5])  # value or path
-            item_checkable = QTableWidgetItem(item[6])  # checkable
+            item_type = QTableWidgetItem(Type.get_type(item[5]))  # data type
+            item_value = QTableWidgetItem(item[6])  # value or path
+            item_checkable = QTableWidgetItem(item[7])  # checkable
             self.table.setCellWidget(index, 0, check_item)
             self.table.setItem(index, 1, item_time)
             self.table.setItem(index, 2, item_type)
