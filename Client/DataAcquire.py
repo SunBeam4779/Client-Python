@@ -447,8 +447,8 @@ class DataAcquire(QWidget):
         self.getter.working = False
         # self.plotter.working = False
         self.timer.stop()
-        self.display_channel1 = [0 for i in range(500)]
-        self.display_channel2 = [0 for j in range(500)]
+        self.display_channel1 = [0 for _ in range(500)]
+        self.display_channel2 = [0 for _ in range(500)]
         self.ECGWinHandle.plot(self.display_channel2, pen=self.pen)
         self.RespirationWinHandle.plot(self.display_channel1, pen=self.pen)
         self.PulseWaveWinHandle.plot(self.display_channel2, pen=self.pen)
