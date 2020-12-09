@@ -125,7 +125,7 @@ class LogManager(QWidget):
         font_of_table.setPixelSize(30)
 
         self.table.setRowCount(row)
-        self.table.setHorizontalHeaderLabels(['姓名', '身份编号', '报告编号'])
+        self.table.setHorizontalHeaderLabels(['姓名', '身份编号', '日期', '报告编号'])
 
         # display item
         index = 0

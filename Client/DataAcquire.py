@@ -336,12 +336,12 @@ class DataAcquire(QWidget):
             raw1 = self.original1.reshape(len(self.original1), 1)
 
             raw_data1 = os.path.join(name + self.user_unique,
-                                     ("/" + self.channel1_type + "/original/raw_1" + self.start_time + ".txt"))
+                                     ("/" + self.channel1_type + "/original/raw_1_" + self.start_time + ".txt"))
             ori_data1 = os.path.join(name + self.user_unique,
-                                     ("/" + self.channel1_type + "/filtered/filtered_1" +
+                                     ("/" + self.channel1_type + "/filtered/filtered_1_" +
                                       self.start_time + ".txt"))
             final_data1 = os.path.join(name + self.user_unique,
-                                       ("/" + self.channel1_type + "/filtered/final_1" +
+                                       ("/" + self.channel1_type + "/filtered/final_1_" +
                                         self.start_time + ".txt"))
             np.savetxt(raw_data1, raw1)
             np.savetxt(ori_data1, ori1)
@@ -350,21 +350,21 @@ class DataAcquire(QWidget):
             try:
                 cursor = db.cursor()
                 cursor.execute("Insert into userdata(username, name, unique_id, data_number, date, "
-                               "data_type, value, checkable, synchronized) "
+                               "data_type, value, checkable, synchronized);"
                                "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" %
                                (username, name, self.user_unique, "1" + self.start_time, self.start_time,
-                                self.data_type, final_data1, 'Yes', 'No'))
+                                self.channel1_type, final_data1, 'Yes', 'No'))
                 db.commit()
             except Exception as e:
                 print("wrong!" + e.__str__())
 
         raw_data2 = os.path.join(name + self.user_unique,
-                                 ("/" + self.channel2_type + "/original/raw_2" + self.start_time + ".txt"))
+                                 ("/" + self.channel2_type + "/original/raw_2_" + self.start_time + ".txt"))
         ori_data2 = os.path.join(name + self.user_unique,
-                                 ("/" + self.channel2_type + "/filtered/filtered_2" +
+                                 ("/" + self.channel2_type + "/filtered/filtered_2_" +
                                   self.start_time + ".txt"))
         final_data2 = os.path.join(name + self.user_unique,
-                                   ("/" + self.channel2_type + "/filtered/final_2" +
+                                   ("/" + self.channel2_type + "/filtered/final_2_" +
                                     self.start_time + ".txt"))
 
         np.savetxt(raw_data2, raw2)
@@ -374,10 +374,10 @@ class DataAcquire(QWidget):
         try:
             cursor = db.cursor()
             cursor.execute("Insert into userdata(username, name, unique_id, data_number, date, "
-                           "data_type, value, checkable, synchronized) "
+                           "data_type, value, checkable, synchronized);"
                            "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" %
                            (username, name, self.user_unique, "2" + self.start_time, self.start_time,
-                            self.data_type, final_data2, 'Yes', 'No'))
+                            self.channel2_type, final_data2, 'Yes', 'No'))
             db.commit()
         except Exception as e:
             print("wrong!" + e.__str__())

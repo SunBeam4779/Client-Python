@@ -3,6 +3,9 @@ import math
 # from bluepy import btle
 import re
 # from binascii import b2a_hex
+import struct
+from datetime import datetime, timedelta
+
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -281,6 +284,10 @@ class Counter(QThread):
 
 class SignalProcess:
 
+    """
+    the signal processing class
+    """
+
     def __init__(self):
         self.order = 4
         self.fs = 2000  # sample rate, Hz
@@ -292,6 +299,12 @@ class SignalProcess:
         self.final_data = []
 
     def _butter_low_pass(self):
+
+        """
+        generate the low pass filter(this should not be use directly)
+        :return: the parameter of filter
+        """
+
         nyq = 0.5 * self.fs
         normal_cutoff1 = 180 / nyq
         normal_cutoff = 0.1 / nyq
@@ -303,6 +316,12 @@ class SignalProcess:
         # return a, b, h_
 
     def _butter_low_pass_filter(self):
+
+        """
+        execute the filtering(this should not be use directly)
+        :return: the result after filtering
+        """
+
         sos, h_ = self._butter_low_pass()
         # first, second, h_ = butter_low_pass(cutoff_, fs_, order_)
         res = sosfilt(sos, self.data_)
@@ -311,6 +330,12 @@ class SignalProcess:
         return res  # Filter requirements.
 
     def _base_line(self):
+
+        """
+        remove the baseline(this should not be use directly)
+        :return: the data without baseline
+        """
+
         if len(self.raw) != 0:
             wp = 1.5 * 2 / 512
             ws_ = 0.2 * 2 / 512
@@ -325,20 +350,46 @@ class SignalProcess:
             return []
 
     def _smooth(self):
+
+        """
+        smooth the data(this should not be use directly)
+        :return: smooth data
+        """
+
         if len(self.baseline) != 0:
             return savgol_filter(self.baseline, 11, 3)
         else:
             return []
 
     def setter(self, data):
+
+        """
+        input the data to be processed
+        :param data: the target data
+        :return: none
+        """
+
         self.data_ = data
 
     def execute(self):
+
+        """
+        the signal process executor.
+        if you want to process the signal you should only use this function
+        :return:
+        """
+
         self.raw = self._butter_low_pass_filter()
         self.baseline = self._base_line()
         self.final_data = self._smooth()
 
     def getter(self):
+
+        """
+        get the final result
+        :return: processed signal
+        """
+
         return self.raw, self.final_data
 
 
@@ -348,50 +399,103 @@ class Caller:
     handle the socket communication with remote server
     """
 
-    signal = pyqtSignal(str)
+    # signal = pyqtSignal(int)
     _tcp_socket = None
     _server_address = None
     _server_port = None
-    _message = None
+    _message1 = None
+    _message2 = None
+    _receive = None
 
     def __init__(self, address, port):
+        # super(Caller, self).__init__()
         self._server_address = address
         self._server_port = port
         self.client_thread = None
+        # self.receive = None
+
+    def setter(self, message1, message2):
+        """
+        set the header and body to be sent
+        :param message1: the header
+        :param message2: the body
+        :return: none
+        """
+        self._message1 = message1
+        self._message2 = message2
         self._tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    def setter(self, message):
-        self._message = message
+    def getter(self):
+
+        """
+        get the feedback from server
+        :return: the feedback
+        """
+
+        return self._receive
+
+    def save(self, info):
+
+        """
+        save the feedback from server
+        :param info: the feedback from server
+        :return: none
+        """
+
+        self._receive = info
 
     def client_send(self):
+
+        """
+        handle the client sending task and start the thread
+        :return: none
+        """
+
         address = (self._server_address, self._server_port)
         try:
             self._tcp_socket.connect(address)
         except Exception as ret:
-            self.signal.emit(ret.__str__())
+            # self.signal.emit(ret.__str__())
+            print("wrong" + ret.__str__())
         else:
             self.client_thread = threading.Thread(target=self.tcp_client_send_concurrency)
             self.client_thread.start()
+            self.client_thread.join()
 
     def tcp_client_send_concurrency(self):
 
         """
-        create the client sending sub thread
-        :return:
+        the client sending sub thread
+        :return: none
         """
 
-        while True:
-            # received_msg = self._tcp_socket.recv(1024)
-            self._tcp_socket.send(self._message.encode('utf-8'))
+        self._tcp_socket.send(self._message1)  # //-send the header
 
-            self._tcp_socket.close()
+        # //- if it's time check, the message2 should be ""
+        if self._message2 != "":
+            self._tcp_socket.send(self._message2)
+
+        # //-get the feedback from server
+        receive_msg = self._tcp_socket.recv(1024)
+
+        # //-store the feedback
+        self.save(receive_msg)
+
+        self._tcp_socket.close()
 
     def client_receive(self):
+
+        """
+        handle the diagnosis log from server(not be used right now)
+        :return: none
+        """
+
         address = (self._server_address, self._server_port)
         try:
             self._tcp_socket.connect(address)
         except Exception as ret:
-            self.signal.emit(ret.__str__())
+            # self.signal.emit(ret.__str__())
+            print(ret.__str__())
         else:
             self.client_thread = threading.Thread(target=self.tcp_client_receive_concurrency)
             self.client_thread.start()
@@ -399,19 +503,22 @@ class Caller:
     def tcp_client_receive_concurrency(self):
 
         """
-        create the client receiving sub thread
+        the client receiving sub thread
         :return:
         """
 
         while True:
-            received_msg = self._tcp_socket.recv(1024)
-            if received_msg:
-                self._tcp_socket.send(self._message.encode('utf-8'))
+            self._receive = self._tcp_socket.recv(1024)
+            if self._receive:
+                self._tcp_socket.send(self._message1)
 
             self._tcp_socket.close()
 
 
 class Type:
+    """
+    get the Chinese name
+    """
     _type = {'ECG': "心电",
              'RESP': "呼吸",
              'PULSE': "脉搏",
@@ -422,21 +529,99 @@ class Type:
 
     @staticmethod
     def get_type(type_):
+        """
+        get the Chinese name of the type
+        :param type_: data type
+        :return: the Chinese name of it
+        """
         return Type._type[type_]
+
+
+class TimeSwitcher:
+
+    """
+    a utility to switch ColeDatetime into datetime(Python), or switch from datetime to ColeDatetime(MFC).
+    """
+
+    @staticmethod
+    def ColeDatetime_to_datetime(date_val):
+
+        """
+        switch from ColeDatetime to datetime
+        :param date_val: date-and-time value in ColeDatetime type
+        :return: value in datetime(Python) type
+        """
+
+        base_date = datetime(year=1899, month=12, day=30, hour=0, minute=0, second=0)
+        parts = math.modf(date_val)
+        days = timedelta(parts[1])
+        days_second = timedelta(abs(parts[0]))
+        return base_date + days + days_second
+
+    @staticmethod
+    def datetime_to_ColeDatetime(date_val):
+
+        """
+        switch from datetime to ColeDatetime
+        :param date_val: date-and-time value in datetime(Python) type
+        :return: value in ColeDatetime type
+        """
+
+        base_date = datetime(year=1899, month=12, day=30, hour=0, minute=0, second=0)
+        dist = date_val - base_date
+        # right_now = base_date + dist
+        # print(dist)
+        # print(repr(dist))
+        # print(dist.days)
+        # print(dist.seconds)
+        # print(dist.microseconds)
+        seconds = dist.seconds + dist.microseconds / 1000000
+        result = dist.days + seconds / 3600 / 24
+        return result
 
 
 class Encoding:
 
+    """
+    handle the code of header type
+    """
+
     _coding = {
-        'ECG': '0000',
-        'RESP': '0001',
-        'PULSE': '0002',
-        'HR': '0003',
-        'RESPR': '0004',
-        'SPO2': '0005',
-        'BP': '0006'
+        'data': 0x1111,
+        'connect': 0x2211,
+        'diagnosis': 0x2222,
+        'time_check': 0x2233,
+        'request': 0x3311,
+        'correct': 0x3322,
+        'wrong': 0x3333,
+        'userinfo': 0x4411,
+        'reqnon': 0x5511
     }
 
     @staticmethod
     def encode(message):
+        """
+        return the code of the given type of header
+        :param message: the type of header
+        :return: the code
+        """
         return Encoding._coding[message]
+
+
+class BCCCRC:
+
+    """
+    handle the CRC calculation
+    """
+
+    @staticmethod
+    def calc(value):
+        """
+        calculate the result of CRC
+        :param value: the data content
+        :return: the result of CRC
+        """
+        result = 0
+        for item in value:
+            result ^= item
+        return result

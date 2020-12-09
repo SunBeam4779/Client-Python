@@ -31,7 +31,7 @@ class MainWindow(QWidget):
         self.user_account_name = "UniversalVoyage"
         self.user_name = "UniversalVoyage"
         self.user_id = "3118113030"
-        self.user_gender = "male"
+        self.user_gender = "男"
         self.user_room = "413"
         self.user_enter_date = "2020-10-25"
         self.user_unique = "not defined"
@@ -363,11 +363,14 @@ class MainWindow(QWidget):
         self.user_account_name = user[0]
         self.user_name = user[2]
         self.user_id = user[3]
-        self.user_gender = user[4]
+        if user[4] == "male":
+            self.gender = "男"
+        else:
+            self.gender = "女"
         self.user_room = user[5]
-        date = user[6]
+        date = user[-2]
         self.user_enter_date = date[:4] + "-" + date[4:6] + "-" + date[-2:]
-        self.user_unique = user[7]
+        self.user_unique = user[-1]
         # print(self.user_unique)
 
     def get_user_profile(self, unique):

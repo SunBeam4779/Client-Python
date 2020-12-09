@@ -116,9 +116,10 @@ class GetIP(QWidget):
 
         self.clear.setText("清除")
         self.confirm.setText("确认")
+        self.confirm.setDefault(True)
 
-        self.clear.setFixedSize(80, 50)
-        self.confirm.setFixedSize(80, 50)
+        self.clear.setFixedSize(180, 80)
+        self.confirm.setFixedSize(180, 80)
 
         self.clear.clicked.connect(self.slot_clear)
         self.confirm.clicked.connect(self.slot_confirm)
