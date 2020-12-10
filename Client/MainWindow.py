@@ -522,9 +522,12 @@ class MainWindow(QWidget):
         :return: none
         """
 
-        self.getIP_win = GetIP()
-        self.getIP_win.signal.connect(self.slot_set_ip)
-        self.getIP_win.show()
+        if self.ip_address == "not defined" and self.port == "not defined":
+            self.getIP_win = GetIP()
+            self.getIP_win.signal.connect(self.slot_set_ip)
+            self.getIP_win.show()
+        else:
+            self.slot_data_sync()
 
     def slot_set_ip(self, message):
 
