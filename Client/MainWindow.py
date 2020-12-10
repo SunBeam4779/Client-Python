@@ -432,7 +432,7 @@ class MainWindow(QWidget):
         try:
             cursor = db.cursor()
             sql = "select * from userdata where (unique_id='%s' and date='%s') order by data_number" % \
-                  (self.user_unique_id, day)
+                  (self.user_unique, day)
             cursor.execute(sql)
             result = cursor.fetchall()
         except Exception as e:

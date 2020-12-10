@@ -39,6 +39,7 @@ class Synchronize(QWidget):
         self.data_sync = QPushButton()
         self.time_sync = QPushButton()
         self.user_sync = QPushButton()
+        self.diagnosis_request = QPushButton()
         self.exit = QPushButton()
 
         # set table container
@@ -89,6 +90,7 @@ class Synchronize(QWidget):
         self.vertical_right_layout.addWidget(self.time_sync)
         # self.vertical_right_layout.addStretch(1)
         self.vertical_right_layout.addWidget(self.user_sync)
+        self.vertical_right_layout.addWidget(self.diagnosis_request)
         self.vertical_right_layout.addStretch(1)
         self.vertical_right_layout.addWidget(self.exit)
 
@@ -107,22 +109,26 @@ class Synchronize(QWidget):
         self.data_sync.setFont(font)
         self.time_sync.setFont(font)
         self.user_sync.setFont(font)
+        self.diagnosis_request.setFont(font)
         self.exit.setFont(font)
 
         self.data_sync.setFixedSize(300, 150)
         self.time_sync.setFixedSize(300, 150)
         self.user_sync.setFixedSize(300, 150)
+        self.diagnosis_request.setFixedSize(300, 150)
         self.exit.setFixedSize(300, 150)
 
         # set text
         self.data_sync.setText("数据同步")
         self.time_sync.setText("时间同步")
         self.user_sync.setText("用户同步")
+        self.diagnosis_request.setText("诊断报告")
         self.exit.setText("退出")
 
         self.user_sync.clicked.connect(self.slot_user_sync)
         self.time_sync.clicked.connect(self.slot_time_sync)
         self.data_sync.clicked.connect(self.slot_data_sync)
+        self.diagnosis_request.clicked.connect(self.slot_diagnosis)
         self.exit.clicked.connect(self.closeWin)
 
     def set_table(self):
@@ -148,13 +154,14 @@ class Synchronize(QWidget):
             check_item.setFont(font_of_table)
             check_item.setText(item[1])  # name
             item_time = QTableWidgetItem(item[3])  # data number
-            item_type = QTableWidgetItem(item[4])  # data type
-            item_value = QTableWidgetItem(item[5])  # value or path
-            item_checkable = QTableWidgetItem(item[6])  # checkable
+            item_id = QTableWidgetItem(item[2])  # unique id
+            item_type = QTableWidgetItem(item[5])  # data type
+            # item_value = QTableWidgetItem(item[6])  # value or path
+            item_checkable = QTableWidgetItem(item[7])  # checkable
             self.table.setCellWidget(index, 0, check_item)
-            self.table.setItem(index, 1, item_time)
+            self.table.setItem(index, 1, item_id)
             self.table.setItem(index, 2, item_type)
-            self.table.setItem(index, 3, item_value)
+            self.table.setItem(index, 3, item_time)
             self.table.setItem(index, 4, item_checkable)
             index += 1
 
@@ -421,6 +428,41 @@ class Synchronize(QWidget):
             QMessageBox.information(self, '成功！', '数据已由工作站保存！', QMessageBox.Ok)
         if first == 13107:
             QMessageBox.information(self, '错误！', '校验码出错，请重新发送！', QMessageBox.Ok)
+
+    def slot_diagnosis(self):
+
+        """
+        sent the diagnosis request to server
+        :return: none
+        """
+
+        # //-get the time of right now
+        now = TimeSwitcher.datetime_to_ColeDatetime(datetime.now())
+        # //-set the header of time check
+        message = Encoding.encode('diagnosis')
+        ecc = 1
+        length = struct.calcsize("idhh")
+        print(length)
+        head = struct.pack("<id4h", message, now, 0, 0, length, ecc)  # Those two 0s are placeholder token
+
+        # //- the code below should be remove, and place the diagnosis receiving code here.
+        # //- the code here is just a fake diagnosis generator.
+        # //- the Caller code should be uncomment if you wanna add the diagnosis receiving code.
+        # # //-send header
+        # caller = Caller(self._ip_address, int(self._ip_port))
+        # caller.setter(head, "")
+        # caller.client_send()
+        # receive = caller.getter()
+        # # print(receive)
+        #
+        # first, second, third, fourth, fifth, six = struct.unpack("<id4h", receive)
+        # if first == 8755:
+        #     new_time = TimeSwitcher.ColeDatetime_to_datetime(second)
+        #     # //-the time fixing function should be placed here
+        #     QMessageBox.information(self, '校时成功！', new_time.__str__(), QMessageBox.Ok)
+        # else:
+        #     QMessageBox.information(self, '错误！', '请重新发送请求！', QMessageBox.Ok)
+        QMessageBox.information(self, '祝您身体健康！', self.user_unique, QMessageBox.Ok)
 
     def closeWin(self):
 
