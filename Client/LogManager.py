@@ -1,6 +1,7 @@
 import numpy
 import pymysql
 from PyQt5.Qt import *
+from Client.LogReader import LogReader
 
 
 class LogManager(QWidget):
@@ -8,6 +9,8 @@ class LogManager(QWidget):
     _size_of_x = 1000
     _size_of_y = 500
     _data_path = "not defined"
+    _file_number = "not defined"
+    _name = "not defined"
     # _data_type = "not defined"
     _item_row = None
 
@@ -134,9 +137,10 @@ class LogManager(QWidget):
             check_item.setFont(font_of_table)
             check_item.setText(item[1])  # name
             # item_time = QTableWidgetItem(item[3])  # data number
-            item_number = QTableWidgetItem(item[5])  # log number
+            item_number = QTableWidgetItem(item[2])  # log number
+            item_id = QTableWidgetItem(self.user_unique_id)
             self.table.setCellWidget(index, 0, check_item)
-            self.table.setItem(index, 1, self.user_unique_id)
+            self.table.setItem(index, 1, item_id)
             self.table.setItem(index, 2, item_number)
             index += 1
 
@@ -182,8 +186,7 @@ class LogManager(QWidget):
                                     QMessageBox.Ok)
         else:
             try:
-                data = numpy.loadtxt(self._data_path)
-                # self.check_data_win = Display(data)
+                self.check_data_win = LogReader(self.user_unique_id, self._name, self._data_path, self._file_number)
                 self.check_data_win.show()
             except Exception as e:
                 QMessageBox.information(self, 'Error', e.__str__(), QMessageBox.Ok)
@@ -198,6 +201,8 @@ class LogManager(QWidget):
         row_index = self.table.currentIndex().row()
         self._item_row = row_index
         self._data_path = self.items[row_index][5]  # path
+        self._name = self.items[row_index][1]
+        self._file_number = self.items[row_index][2]
         # print(self._data_path)
 
     def delete_item(self):

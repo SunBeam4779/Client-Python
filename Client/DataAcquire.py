@@ -310,6 +310,7 @@ class DataAcquire(QWidget):
             result = cursor.fetchall()
         except Exception as e:
             print("select data wrong" + e.__str__())
+        result = result[0]
         username = result[0]
         name = result[2]
 

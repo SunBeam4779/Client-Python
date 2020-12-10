@@ -200,8 +200,8 @@ class DataManager(QWidget):
 
         row_index = self.table.currentIndex().row()
         self._item_row = row_index
-        self._data_path = self.items[row_index][5]  # path
-        self._data_type = self.items[row_index][4]  # type
+        self._data_path = self.items[row_index][6]  # path
+        self._data_type = self.items[row_index][5]  # type
         # print(self._data_path)
 
     def delete_item(self):

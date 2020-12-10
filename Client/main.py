@@ -11,6 +11,7 @@ from Client.DataManager import DataManager
 from Client.Display import Display
 from Client.DataAcquire import DataAcquire
 from Client.LogManager import LogManager
+from Client.LogReader import LogReader
 import sys
 
 # date = QDate().currentDate()
@@ -28,6 +29,7 @@ app = QApplication(sys.argv)
 # window = InformationCheck()  # this should be neglected
 # window = Synchronize(None)
 window = StartWindow()
+# window = LogReader("", "", "", "")
 # window = BLE()
 # window = DataManager(0)
 # window = LogManager("not defined")

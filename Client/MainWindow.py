@@ -432,7 +432,7 @@ class MainWindow(QWidget):
         try:
             cursor = db.cursor()
             sql = "select * from userdata where (unique_id='%s' and date='%s') order by data_number" % \
-                  (self.user_unique_id, day)
+                  (self.user_unique, day)
             cursor.execute(sql)
             result = cursor.fetchall()
         except Exception as e:
@@ -522,9 +522,12 @@ class MainWindow(QWidget):
         :return: none
         """
 
-        self.getIP_win = GetIP()
-        self.getIP_win.signal.connect(self.slot_set_ip)
-        self.getIP_win.show()
+        if self.ip_address == "not defined" and self.port == "not defined":
+            self.getIP_win = GetIP()
+            self.getIP_win.signal.connect(self.slot_set_ip)
+            self.getIP_win.show()
+        else:
+            self.slot_data_sync()
 
     def slot_set_ip(self, message):
 

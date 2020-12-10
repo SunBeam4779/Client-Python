@@ -53,4 +53,25 @@ def insert_data():
     connect.close()
 
 
-insert_data()
+def insert_log():
+
+    """
+    Only for test. Insert the user's information into the database
+    :return: none
+    """
+
+    cursor = connect.cursor()
+    try:
+        cursor.execute("Insert into log(username, name, file_number, date, unique_id, log_path)"
+                       "values('%s', '%s', '%s', '%s', '%s', '%s');" %
+                       ('universal', '杨宇航', '120201208141904', '20201208',
+                        '1550', 'D:/python3/workspace/Client/Client/docs/log.txt'))
+        connect.commit()
+    except Exception as e:
+        print("wrong!" + e.__str__())
+    cursor.close()
+    connect.close()
+
+
+# insert_data()
+insert_log()

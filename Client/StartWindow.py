@@ -223,7 +223,7 @@ class StartWindow(QWidget):
         except Exception as e:
             print(e.__str__())
 
-        sql4 = "CREATE TABLE IF NOT EXISTS LOG(username TEXT, name TEXT, " \
+        sql4 = "CREATE TABLE IF NOT EXISTS LOG(username TEXT, name TEXT, file_number TEXT, date TEXT," \
                "unique_id TEXT, log_path TEXT);"
         try:
             cursor.execute(sql4)
