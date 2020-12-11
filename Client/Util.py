@@ -4,7 +4,6 @@ import math
 # from bluepy import btle
 import re
 # from binascii import b2a_hex
-import struct
 from datetime import datetime, timedelta
 
 from PyQt5 import QtCore, QtGui
