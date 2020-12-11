@@ -1,3 +1,4 @@
+import array
 import math
 
 # from bluepy import btle
@@ -616,12 +617,16 @@ class BCCCRC:
 
     @staticmethod
     def calc(value):
+
         """
         calculate the result of CRC
         :param value: the data content
         :return: the result of CRC
         """
+
         result = 0
-        for item in value:
+        temp = array.array('B', value)
+        for item in temp:
+            # print(type(item))
             result ^= item
         return result

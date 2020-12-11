@@ -17,22 +17,22 @@ port = 5561
 request time check
 """
 
-now = datetime.now()
-print(now)
-Col = TimeSwitcher.datetime_to_ColeDatetime(now)
-print("%13f", Col)
-value = float('%.12f' % Col)
-print(value)
-another = TimeSwitcher.ColeDatetime_to_datetime(Col)
-print(another)
-
-message = 0x2233
-ecc = 1
-length = struct.calcsize("idhh")
-print(length)
-print(struct.pack("!d", Col))
-head = struct.pack("<id4h", message, Col, 0, 0, length, ecc)  # Those two 0s are placeholder token
-print(head)
+# now = datetime.now()
+# print(now)
+# Col = TimeSwitcher.datetime_to_ColeDatetime(now)
+# print("%13f", Col)
+# value = float('%.12f' % Col)
+# print(value)
+# another = TimeSwitcher.ColeDatetime_to_datetime(Col)
+# print(another)
+#
+# message = 0x2233
+# ecc = 1
+# length = struct.calcsize("idhh")
+# print(length)
+# print(struct.pack("!d", Col))
+# head = struct.pack("<id4h", message, Col, 0, 0, length, ecc)  # Those two 0s are placeholder token
+# print(head)
 
 
 """
@@ -80,44 +80,42 @@ NOTE: when transmitting the user information, the header and body should use the
 #
 # head = struct.pack("<id4h", message, enter_time, 0, 0, length, ecc)
 
-# print(str(time.strftime("%Y%m%d%H%M%S", time.localtime())))
-# data = np.loadtxt("D:\\My Documents\\ECG Detector Project\\data\\ECG\\Filtered\\data999_Channel1_dec.txt")
-# temp = data.reshape(1, len(data))
-# signal = temp.tolist()
+print(str(time.strftime("%Y%m%d%H%M%S", time.localtime())))
+data = np.loadtxt("D:\\My Documents\\ECG Detector Project\\data\\ECG\\Filtered\\data999_Channel1_dec.txt")
+temp = data.reshape(1, len(data))
+signal = temp.tolist()
 # print(type(signal))
-# signal1 = list.copy(signal[0][:4096])
-# signal2 = [0.0 for _ in range(4096)]
-# signal3 = [0.0 for _ in range(4096)]
-#
-# userid = 1118
-# message = Encoding.encode('data')
-# length = struct.calcsize("idhh")
-# time_now = TimeSwitcher.datetime_to_ColeDatetime(datetime.now())
-#
-# phy = struct.pack("<i2iiii%sf%sf%sffffd2h" % (len(signal1), len(signal2), len(signal3)),
-#                   userid,
-#                   *[0, 0],
-#                   0,
-#                   0,
-#                   0,
-#                   *signal1,
-#                   *signal2,
-#                   *signal3,
-#                   0.0,
-#                   0.0,
-#                   0.0,
-#                   time_now, 0, 0)
-# ecc = BCCCRC.calc(phy)
-#
-# print(ecc)
-#
-# head = struct.pack("<id4h", message, time_now, 0, 0, length, ecc)
+signal1 = list.copy(signal[0][:4096])
+signal2 = [0.0 for _ in range(4096)]
+signal3 = [0.0 for _ in range(4096)]
+
+userid = 1118
+message = Encoding.encode('data')
+length = struct.calcsize("idhh")
+time_now = TimeSwitcher.datetime_to_ColeDatetime(datetime.now())
+
+phy = struct.pack("<i2iiii%sf%sf%sffffd2h" % (len(signal1), len(signal2), len(signal3)),
+                  userid,
+                  *[0, 0],
+                  0,
+                  0,
+                  0,
+                  *signal1,
+                  *signal2,
+                  *signal3,
+                  0.0,
+                  0.0,
+                  0.0,
+                  time_now, 0, 0)
+ecc = BCCCRC.calc(phy)
+print(ecc)
+# print(int.from_bytes(ecc, byteorder='little'))
+
+head = struct.pack("<id4h", message, time_now, 0, 0, length, ecc)
 
 caller1 = Caller(address, port)
-caller1.setter(head, "")
+caller1.setter(head, phy)
 caller1.client_send()
-for i in range(500000):
-    pass
 receive = caller1.getter()
 print(receive)
 first, second, third, fourth, fifth, six = struct.unpack("<id4h", receive)
