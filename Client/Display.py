@@ -9,6 +9,10 @@ from pyqtgraph.Qt import QtGui, QtCore
 
 class Display(GraphicsLayoutWidget):
 
+    """
+    handle the data displaying
+    """
+
     def __init__(self, data_):
         super(Display, self).__init__()
 

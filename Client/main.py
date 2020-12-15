@@ -14,15 +14,6 @@ from Client.LogManager import LogManager
 from Client.LogReader import LogReader
 import sys
 
-# date = QDate().currentDate()
-# thisday = date.day()
-# day = str(date.day())
-# if thisday < 10:
-#     day = "0" + day
-# year = str(date.year())
-# month = str(date.month())
-# thisDate = year + month + day
-# print(thisDate)
 app = QApplication(sys.argv)
 # window = DataAcquire(None)
 # window = MainWindow([])
