@@ -5,6 +5,12 @@ from Client.LogReader import LogReader
 
 
 class LogManager(QWidget):
+
+    """
+    manage the diagnosis.
+    you can choose to check or delete them.
+    """
+
     _icon = ".\\docs\\20190702211158.jpg"
     _size_of_x = 1000
     _size_of_y = 500

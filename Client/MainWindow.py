@@ -1,5 +1,6 @@
 import time
 
+import cv2
 import pymysql
 import os
 
@@ -36,13 +37,13 @@ class MainWindow(QWidget):
         self.user_enter_date = "2020-10-25"
         self.user_unique = "not defined"
         self.profile = "./docs/20190702211158.jpg"
-        self.get_user_info(user)
-        self.profile = self.get_user_profile(self.user_unique)
+        self._get_user_info(user)
+        self.profile = self._get_user_profile(self.user_unique)
         self.ip_address = "not defined"
         self.port = "not defined"
 
         # make directories for user
-        self.make_user_dir()
+        self._make_user_dir()
 
         # set ICON
         self.Icon = QIcon(self._icon)
@@ -122,14 +123,16 @@ class MainWindow(QWidget):
         self.horizon_bottom_left_layout_PW = QHBoxLayout()
         self.horizon_bottom_left_layout_RESP = QHBoxLayout()
 
+        self.video_thread = CameraHandler(self.Video, self.user_name, self.user_unique)
+
         # add item
-        self.add_label()
-        self.add_button()
+        self._add_label()
+        self._add_button()
 
         # set layout
-        self.set_ui()
+        self._set_ui()
 
-    def set_ui(self):
+    def _set_ui(self):
 
         """
         set the graph layout
@@ -234,7 +237,7 @@ class MainWindow(QWidget):
         # self.vertical_layout.addStretch(0)
         self.vertical_layout.addLayout(self.vertical_bottom_layout)
 
-    def add_button(self):
+    def _add_button(self):
 
         """
         set the button to operate the video and the other common function
@@ -261,8 +264,8 @@ class MainWindow(QWidget):
         self.time.setText("校时")
         self.Log.setText("查看报告")
         self.VideoSaving.setText("保存")
-        self.Pause.setText("暂停")
-        self.Stop.setText("停止")
+        self.Pause.setText("开始")
+        self.Stop.setText("暂停")
 
         self.Acquire.setFixedSize(165, 100)
         self.CheckAndManage.setFixedSize(165, 100)
@@ -274,12 +277,14 @@ class MainWindow(QWidget):
         self.Pause.setFixedSize(100, 100)
         self.Stop.setFixedSize(100, 100)
 
-        self.Acquire.clicked.connect(self.slot_acquire)
-        self.CheckAndManage.clicked.connect(self.slot_data_manager)
-        self.Synchronize.clicked.connect(self.slot_get_ip)
-        self.Log.clicked.connect(self.slot_log_check)
+        self.Acquire.clicked.connect(self._slot_acquire)
+        self.CheckAndManage.clicked.connect(self._slot_data_manager)
+        self.Synchronize.clicked.connect(self._slot_get_ip)
+        self.Log.clicked.connect(self._slot_log_check)
+        self.VideoSaving.clicked.connect(self._slot_video_saving)
+        self.Pause.clicked.connect(self._slot_video_start)
 
-    def add_label(self):
+    def _add_label(self):
 
         """
         labels contain the tips and user's information
@@ -340,7 +345,8 @@ class MainWindow(QWidget):
         self.EnterDate.setText("入园日期：" + self.user_enter_date)
 
         # this will be replaced by the video preview later
-        self.Video.setPixmap((QPixmap("./docs/20191012094812.jpg").scaled(720, 400)))
+        self.Video.setFixedSize(720, 400)
+        self.Video.setPixmap((QPixmap("./docs/20191012094812.jpg")))
 
         self.HeartRate.setText("心率：")
         self.BloodPressure.setText("血压：")
@@ -350,7 +356,7 @@ class MainWindow(QWidget):
         self.PulseWave.setText("脉搏：")
         self.Respiration.setText("呼吸：")
 
-    def get_user_info(self, user):
+    def _get_user_info(self, user):
 
         """
         get the user's information
@@ -373,7 +379,7 @@ class MainWindow(QWidget):
         self.user_unique = user[-1]
         # print(self.user_unique)
 
-    def get_user_profile(self, unique):
+    def _get_user_profile(self, unique):
 
         """
         set the user's profile
@@ -399,7 +405,7 @@ class MainWindow(QWidget):
             return self.profile
         return result[0][-1]
 
-    def slot_acquire(self):
+    def _slot_acquire(self):
 
         """
         open the BLE managing window
@@ -407,11 +413,11 @@ class MainWindow(QWidget):
         """
 
         self.acquire_win = BLE(self.user_unique)
-        self.acquire_win.signal.connect(self.update_data)
+        self.acquire_win.signal.connect(self._update_data)
         # self.acquire_win = BLEwithBleak()
         self.acquire_win.show()
 
-    def update_data(self):
+    def _update_data(self):
 
         """
         update the recently acquired data
@@ -494,7 +500,7 @@ class MainWindow(QWidget):
             self.valueOfRespRate.setText(respr_new)
         # //-THE shit is over.
 
-    def slot_data_manager(self):
+    def _slot_data_manager(self):
 
         """
         open the Data manager window
@@ -505,7 +511,7 @@ class MainWindow(QWidget):
         self.data_manager_win = DataManager(self.user_unique)
         self.data_manager_win.show()
 
-    def slot_data_sync(self):
+    def _slot_data_sync(self):
 
         """
         open the data synchronizing window
@@ -515,7 +521,7 @@ class MainWindow(QWidget):
         self.data_sync_win = Synchronize(self.user_unique, self.ip_address, self.port)
         self.data_sync_win.show()
 
-    def slot_get_ip(self):
+    def _slot_get_ip(self):
 
         """
         get the server's ip address
@@ -524,12 +530,12 @@ class MainWindow(QWidget):
 
         if self.ip_address == "not defined" and self.port == "not defined":
             self.getIP_win = GetIP()
-            self.getIP_win.signal.connect(self.slot_set_ip)
+            self.getIP_win.signal.connect(self._slot_set_ip)
             self.getIP_win.show()
         else:
-            self.slot_data_sync()
+            self._slot_data_sync()
 
-    def slot_set_ip(self, message):
+    def _slot_set_ip(self, message):
 
         """
         set the ip address
@@ -539,9 +545,9 @@ class MainWindow(QWidget):
         self.ip_address = message['ip']
         self.port = message['port']
         print("ip: " + self.ip_address + " port: " + self.port)
-        self.slot_data_sync()
+        self._slot_data_sync()
 
-    def slot_log_check(self):
+    def _slot_log_check(self):
 
         """
         open the log manager window
@@ -551,7 +557,29 @@ class MainWindow(QWidget):
         self.log_win = LogManager(self.user_unique)
         self.log_win.show()
 
-    def make_user_dir(self):
+    def _slot_video_saving(self):
+
+        """
+        save the video and stop the thread.
+        :return: none
+        """
+
+        self.video_thread.setter()
+
+    def _slot_video_start(self):
+
+        """
+        start the video recording.
+        :return: none
+        """
+
+        if self.video_thread.working:
+            self.video_thread.start()
+        else:
+            self.video_thread.setter()
+            self.video_thread.start()
+
+    def _make_user_dir(self):
 
         """
         make the data directories for user
@@ -664,3 +692,73 @@ class MainWindow(QWidget):
             event.accept()
         else:
             event.ignore()
+
+
+class CameraHandler(QThread):
+
+    """
+    handle the video recording and previewing function
+    """
+
+    working = True
+    _width = None
+    _height = None
+    _fourcc = None
+    _fps = None
+    _frame_size = None
+    _name = "not defined"
+    _unique = "not defined"
+
+    def __init__(self, label, name, unique):
+        super(CameraHandler, self).__init__()
+        self.video = label
+        self.cap = cv2.VideoCapture(0)
+        self._width = 640
+        self._height = 480
+        self._fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        self._fps = 30
+        self.out = None
+        self._name = name
+        self._unique = unique
+
+    def run(self):
+
+        """
+        the main loop of this thread to handle the video recording and displaying
+        :return: none
+        """
+
+        # //- get the start time as the name of video
+        start_time = str(time.strftime("%Y%m%d%H%M%S", time.localtime()))
+        path = os.path.join("./docs/data/", (self._name + self._unique + "/VIDEO/" + start_time + ".mp4"))
+        # print(path)
+
+        # //- set the output
+        self.out = cv2.VideoWriter(path, self._fourcc, self._fps, (self._width, self._height))
+        if self.cap.isOpened():
+            # //- display the preview and record the video
+            while self.working:
+                ret, frame = self.cap.read()
+                frame2 = cv2.flip(frame, 1)
+                self.out.write(frame2)
+                # width, height, bytes_per_component = frame.shape
+                # bytes_per_line = bytes_per_component * height
+                frames = cv2.cvtColor(frame2, cv2.COLOR_BGR2RGB)
+                image = QImage(frames.data, frames.shape[1],
+                               frames.shape[0], QImage.Format_RGB888)
+                # cv2.imshow("1", frame2)
+                self.video.setPixmap(QPixmap.fromImage(image))
+            self.cap.release()
+            self.out.release()
+
+    def setter(self):
+
+        """
+        stop the thread, or resume it.
+        :return: none
+        """
+
+        if self.working:
+            self.working = False
+        else:
+            self.working = True

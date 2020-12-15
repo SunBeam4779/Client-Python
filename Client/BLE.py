@@ -1,10 +1,14 @@
 from PyQt5.Qt import *
-from Client.Scanner import Scanner
+from Client.Util import Scanner
 from Client.DataAcquire import DataAcquire
 # from bluepy import btle
 
 
 class BLE(QWidget):
+
+    """
+    the entrance of BLE message handling
+    """
 
     signal = pyqtSignal(int)
     _icon = ".\\docs\\20190702211158.jpg"

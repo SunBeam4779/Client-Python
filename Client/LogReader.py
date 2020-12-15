@@ -2,6 +2,11 @@ from PyQt5.Qt import *
 
 
 class LogReader(QWidget):
+
+    """
+    handle the diagnosis log showing event.
+    """
+
     _icon = ".\\docs\\20190702211158.jpg"
     _size_of_x = 1000
     _size_of_y = 500
@@ -88,6 +93,11 @@ class LogReader(QWidget):
 
     def set_reader_label(self):
 
+        """
+        set the font and info of label and textedit
+        :return: none
+        """
+
         font = QFont()
         font.setFamily("Times")
         font.setPixelSize(50)
@@ -98,12 +108,18 @@ class LogReader(QWidget):
         self.file_reader.setFont(font)
 
         self.file_reader.setFixedSize(1500, 985)
+        self.file_reader.setReadOnly(True)
 
         self.username.setText("姓名：%s" % self._name)
         self.user_unique_label.setText("身份编号：%s" % self.user_unique)
         self.date.setText("报告日期编号：\n%s" % self._date)
 
     def make_file(self):
+
+        """
+        prepare for diagnosis log displaying
+        :return: none
+        """
 
         log = open(self._path)
         lines = log.readlines()

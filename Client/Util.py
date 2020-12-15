@@ -1,9 +1,9 @@
+import array
 import math
 
 # from bluepy import btle
 import re
 # from binascii import b2a_hex
-import struct
 from datetime import datetime, timedelta
 
 from PyQt5 import QtCore, QtGui
@@ -48,6 +48,35 @@ import threading
 #             #     res = [self.q.get(), self.q.get(), self.q.get()]
 #             #     self.signal[str, str, str].emit(res[0], res[1], res[2])
 #         # print("Received data:")
+
+
+class Scanner:
+
+    """
+    the BLE peripheral scanner
+    """
+
+    scanner = None
+    result_of_scan = {}
+
+    def __init__(self):
+        # self.scanner = btle.Scanner()
+        self.scanner = None
+
+    def scan(self):
+
+        """
+        handle the BLE peripherals scanning and save them into the result list
+        :return: none
+        """
+
+        self.scanner.scan(5.0)
+        devices = self.scanner.getDevices()
+        self.result_of_scan.clear()
+        for dev in devices:
+            name = dev.getValue(0x09)
+            self.result_of_scan[name] = dev.addr
+        return self.result_of_scan
 
 
 class Splitter:
@@ -516,9 +545,11 @@ class Caller:
 
 
 class Type:
+
     """
     get the Chinese name
     """
+
     _type = {'ECG': "心电",
              'RESP': "呼吸",
              'PULSE': "脉搏",
@@ -600,11 +631,13 @@ class Encoding:
 
     @staticmethod
     def encode(message):
+
         """
         return the code of the given type of header
         :param message: the type of header
         :return: the code
         """
+
         return Encoding._coding[message]
 
 
@@ -616,12 +649,16 @@ class BCCCRC:
 
     @staticmethod
     def calc(value):
+
         """
         calculate the result of CRC
         :param value: the data content
         :return: the result of CRC
         """
+
         result = 0
-        for item in value:
+        temp = array.array('B', value)
+        for item in temp:
+            # print(type(item))
             result ^= item
         return result

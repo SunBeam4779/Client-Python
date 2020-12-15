@@ -5,8 +5,7 @@ import time
 import pymysql
 from PyQt5.Qt import *
 # from Client.Util import MyDelegate
-from Client.Util import Splitter
-from Client.Util import SignalProcess
+from Client.Util import SignalProcess, Splitter
 # from bluepy import btle
 from queue import Queue
 import pyqtgraph as pg
@@ -14,6 +13,11 @@ import numpy as np
 
 
 class DataAcquire(QWidget):
+
+    """
+    receive the data through BLE
+    """
+
     _icon = ".\\docs\\20190702211158.jpg"
     _size_of_x = 800
     _size_of_y = 600
@@ -336,14 +340,12 @@ class DataAcquire(QWidget):
             ori1 = ori1.reshape(len(ori1), 1)
             raw1 = self.original1.reshape(len(self.original1), 1)
 
-            raw_data1 = os.path.join(name + self.user_unique,
-                                     ("/" + self.channel1_type + "/original/raw_1_" + self.start_time + ".txt"))
-            ori_data1 = os.path.join(name + self.user_unique,
-                                     ("/" + self.channel1_type + "/filtered/filtered_1_" +
-                                      self.start_time + ".txt"))
-            final_data1 = os.path.join(name + self.user_unique,
-                                       ("/" + self.channel1_type + "/filtered/final_1_" +
-                                        self.start_time + ".txt"))
+            raw_data1 = os.path.join("./docs/data/", (name + self.user_unique + "/" + self.channel1_type +
+                                                      "/original/raw_1_" + self.start_time + ".txt"))
+            ori_data1 = os.path.join("./docs/data/", (name + self.user_unique + "/" + self.channel1_type +
+                                                      "/filtered/filtered_1_" + self.start_time + ".txt"))
+            final_data1 = os.path.join("./docs/data/", (name + self.user_unique + "/" + self.channel1_type +
+                                                        "/filtered/final_1_" + self.start_time + ".txt"))
             np.savetxt(raw_data1, raw1)
             np.savetxt(ori_data1, ori1)
             np.savetxt(final_data1, result1)
@@ -359,14 +361,12 @@ class DataAcquire(QWidget):
             except Exception as e:
                 print("wrong!" + e.__str__())
 
-        raw_data2 = os.path.join(name + self.user_unique,
-                                 ("/" + self.channel2_type + "/original/raw_2_" + self.start_time + ".txt"))
-        ori_data2 = os.path.join(name + self.user_unique,
-                                 ("/" + self.channel2_type + "/filtered/filtered_2_" +
-                                  self.start_time + ".txt"))
-        final_data2 = os.path.join(name + self.user_unique,
-                                   ("/" + self.channel2_type + "/filtered/final_2_" +
-                                    self.start_time + ".txt"))
+        raw_data2 = os.path.join("./docs/data/", (name + self.user_unique + "/" + self.channel2_type +
+                                                  "/original/raw_2_" + self.start_time + ".txt"))
+        ori_data2 = os.path.join("./docs/data/", (name + self.user_unique + "/" + self.channel2_type +
+                                                  "/filtered/filtered_2_" + self.start_time + ".txt"))
+        final_data2 = os.path.join("./docs/data/", (name + self.user_unique + "/" + self.channel2_type +
+                                                    "/filtered/final_2_" + self.start_time + ".txt"))
 
         np.savetxt(raw_data2, raw2)
         np.savetxt(ori_data2, ori2)

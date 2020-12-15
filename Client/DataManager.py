@@ -6,6 +6,12 @@ import pymysql
 
 
 class DataManager(QWidget):
+
+    """
+    handle the data in database.
+    you can choose to check or delete them.
+    """
+
     _icon = ".\\docs\\20190702211158.jpg"
     _size_of_x = 1000
     _size_of_y = 500

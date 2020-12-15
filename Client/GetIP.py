@@ -159,7 +159,11 @@ class GetIP(QWidget):
         :return: none
         """
 
-        self.IP_address_edit.clear()
+        self.IP_address1.clear()
+        self.IP_address2.clear()
+        self.IP_address3.clear()
+        self.IP_address4.clear()
+        self.IP_port.clear()
 
     def slot_jump1(self):
 

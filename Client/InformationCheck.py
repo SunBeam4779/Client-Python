@@ -1,5 +1,9 @@
 from PyQt5.Qt import *
 
+"""
+this file is not be used.
+"""
+
 
 class InformationCheck(QWidget):
     _icon = ".\\docs\\20190702211158.jpg"
