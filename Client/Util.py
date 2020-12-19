@@ -435,6 +435,7 @@ class Caller:
     _message1 = None
     _message2 = None
     _receive = None
+    _info = None
 
     def __init__(self, address, port):
         # super(Caller, self).__init__()
@@ -461,17 +462,19 @@ class Caller:
         :return: the feedback
         """
 
-        return self._receive
+        return self._receive, self._info
 
-    def save(self, info):
+    def save(self, first_msg, info):
 
         """
         save the feedback from server
+        :param first_msg: head
         :param info: the feedback from server
         :return: none
         """
 
-        self._receive = info
+        self._receive = first_msg
+        self._info = info
 
     def client_send(self):
 
@@ -505,10 +508,11 @@ class Caller:
             self._tcp_socket.send(self._message2)
 
         # //-get the feedback from server
-        receive_msg = self._tcp_socket.recv(1024)
+        receive_msg = self._tcp_socket.recv(4096)
+        receive_msg2 = self._tcp_socket.recv(8192)
 
         # //-store the feedback
-        self.save(receive_msg)
+        self.save(receive_msg, receive_msg2)
 
         self._tcp_socket.close()
 

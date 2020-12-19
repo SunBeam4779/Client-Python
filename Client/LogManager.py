@@ -1,3 +1,5 @@
+import os
+
 import numpy
 import pymysql
 from PyQt5.Qt import *
@@ -195,7 +197,7 @@ class LogManager(QWidget):
                 self.check_data_win = LogReader(self.user_unique_id, self._name, self._data_path, self._file_number)
                 self.check_data_win.show()
             except Exception as e:
-                QMessageBox.information(self, 'Error', e.__str__(), QMessageBox.Ok)
+                QMessageBox.information(self, '错误！', e.__str__(), QMessageBox.Ok)
 
     def select_item(self):
 
@@ -219,9 +221,7 @@ class LogManager(QWidget):
         """
 
         if self._data_path == "not defined" or self.user_unique_id == "not defined":
-            QMessageBox.information(self, 'Error',
-                                    'The path or the type of data '
-                                    'not defined', QMessageBox.Ok)
+            QMessageBox.information(self, '错误！', '报告的路径未定义', QMessageBox.Ok)
         else:
             db = None
             cursor = None
@@ -230,6 +230,7 @@ class LogManager(QWidget):
                 cursor = db.cursor()
             except Exception as e:
                 print("database connection wrong" + e.__str__())
+                QMessageBox.information(self, '错误！', '数据库连接出错。', QMessageBox.Ok)
 
             question = QMessageBox()
             question.setWindowTitle("删除")
@@ -244,19 +245,26 @@ class LogManager(QWidget):
             question.exec_()
             if question.clickedButton() == yes:
                 try:
-                    sql = "delete from log where (log_number='%s' and user_unique='%s');" % \
-                          (self.items[self._item_row][3], self.user_unique_id)
+                    print(self.items[self._item_row][2])
+                    sql = "delete from log where (file_number='%s' and unique_id='%s');" % \
+                          (self.items[self._item_row][2], self.user_unique_id)
                     cursor.execute(sql)
                     db.commit()
+                    os.remove(self.items[self._item_row][5])  # delete the local file
                     # result = cursor.fetchall()
                     self.items = self.select_data()
                     self.table.clear()
                     self.set_table()
                 except Exception as e:
                     print("select data wrong" + e.__str__())
+                    QMessageBox.information(self, '错误！', '报告删除失败！', QMessageBox.Ok)
                     db.rollback()
             else:
                 return
+            QMessageBox.information(self, '成功！', '报告已成功删除！', QMessageBox.Ok)
+            # //-update the table and data to be shown
+            # self.items = self.select_data()
+            # self.set_table()
 
     def close_win(self):
 

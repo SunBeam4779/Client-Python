@@ -601,6 +601,7 @@ class MainWindow(QWidget):
         pulse_original = pulse + "original/"
         pulse_filtered = pulse + "filtered/"
         video = path + "VIDEO/"  # video
+        log = path + "LOG"
 
         if not os.path.exists(path):
             try:
@@ -665,6 +666,12 @@ class MainWindow(QWidget):
         if not os.path.exists(video):
             try:
                 os.mkdir(video)
+            except Exception as e:
+                print(e.__str__())
+
+        if not os.path.exists(log):
+            try:
+                os.mkdir(log)
             except Exception as e:
                 print(e.__str__())
 

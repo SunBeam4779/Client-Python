@@ -90,7 +90,7 @@ signal2 = [0.0 for _ in range(4096)]
 signal3 = [0.0 for _ in range(4096)]
 
 userid = 1118
-message = Encoding.encode('data')
+message = Encoding.encode('diagnosis')  # data
 length = struct.calcsize("idhh")
 time_now = TimeSwitcher.datetime_to_ColeDatetime(datetime.now())
 
@@ -114,10 +114,17 @@ print(ecc)
 head = struct.pack("<id4h", message, time_now, 0, 0, length, ecc)
 
 caller1 = Caller(address, port)
-caller1.setter(head, phy)
+caller1.setter(head, "")  # phy
 caller1.client_send()
-receive = caller1.getter()
+receive, info = caller1.getter()
 print(receive)
+print(info)
 first, second, third, fourth, fifth, six = struct.unpack("<id4h", receive)
+
+diagnosis = struct.unpack("=%ds" % len(info), info)
+print(type(diagnosis))
+string = str(diagnosis[0], encoding="gbk")
 print(first)
 print(second)
+print(diagnosis)
+print(string)
