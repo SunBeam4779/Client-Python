@@ -1,9 +1,12 @@
+import os
+import time
 from _datetime import datetime
 import struct
 
 import pymysql
 from PyQt5.Qt import *
 from Client.Util import Caller, TimeSwitcher, Encoding, BCCCRC
+from Client.LogReader import LogReader
 import numpy as np
 
 
@@ -31,6 +34,7 @@ class Synchronize(QWidget):
         self._ip_address = ip_address
         self._ip_port = ip_port
         self.items = self.to_be_synchronized()
+        self.check_data_win = None
 
         # set Icon
         self.Icon = QIcon(self._icon)
@@ -236,9 +240,9 @@ class Synchronize(QWidget):
         # caller.signal.connect(self.slot_getter)
         caller.setter(head, "")
         caller.client_send()
-        receive = caller.getter()
+        receive1, receive2 = caller.getter()
         # print(receive)
-        first, second, third, fourth, fifth, six = struct.unpack("<id4h", receive)
+        first, second, third, fourth, fifth, six = struct.unpack("<id4h", receive1)
         if first == 8755:
             new_time = TimeSwitcher.ColeDatetime_to_datetime(second)
             # //-the time fixing function should be placed here
@@ -314,7 +318,8 @@ class Synchronize(QWidget):
         caller = Caller(self._ip_address, int(self._ip_port))
         caller.setter(head, userinfo)
         caller.client_send()
-        first, second, third, fourth, fifth, six = struct.unpack("<id4h", caller.getter())
+        receive1, receive2 = caller.getter()
+        first, second, third, fourth, fifth, six = struct.unpack("<id4h", receive1)
         # print(first)
         if first == 13090:  # //- data was sent without mistake
             QMessageBox.information(self, '成功！', '用户信息已由工作站保存！', QMessageBox.Ok)
@@ -401,9 +406,9 @@ class Synchronize(QWidget):
         caller = Caller(self._ip_address, int(self._ip_port))
         caller.setter(head, phy)
         caller.client_send()
-        receive = caller.getter()
+        receive1, receive2 = caller.getter()
         # print(receive)
-        first, second, third, fourth, fifth, six = struct.unpack("<id4h", receive)
+        first, second, third, fourth, fifth, six = struct.unpack("<id4h", receive1)
         if first == 13090:  # //- data was sent without mistake
             # //-update the data showing table and the content in database
             db = None
@@ -448,21 +453,60 @@ class Synchronize(QWidget):
         # //- the code below should be remove, and place the diagnosis receiving code here.
         # //- the code here is just a fake diagnosis generator.
         # //- the Caller code should be uncomment if you wanna add the diagnosis receiving code.
-        # # //-send header
-        # caller = Caller(self._ip_address, int(self._ip_port))
-        # caller.setter(head, "")
-        # caller.client_send()
-        # receive = caller.getter()
-        # # print(receive)
-        #
-        # first, second, third, fourth, fifth, six = struct.unpack("<id4h", receive)
-        # if first == 8755:
-        #     new_time = TimeSwitcher.ColeDatetime_to_datetime(second)
-        #     # //-the time fixing function should be placed here
-        #     QMessageBox.information(self, '校时成功！', new_time.__str__(), QMessageBox.Ok)
-        # else:
-        #     QMessageBox.information(self, '错误！', '请重新发送请求！', QMessageBox.Ok)
-        QMessageBox.information(self, '祝您身体健康！', self.user_unique, QMessageBox.Ok)
+        # //-send header
+        caller = Caller(self._ip_address, int(self._ip_port))
+        caller.setter(head, "")
+        caller.client_send()
+        receive1, receive2 = caller.getter()
+        # print(receive)
+
+        first, second, third, fourth, fifth, six = struct.unpack("<id4h", receive1)
+        if first == 8738:
+
+            db = None
+            try:
+                db = pymysql.connect(host='localhost', user='root', password='root', db='user')
+            except Exception as e:
+                print("database connection wrong" + e.__str__())
+
+            result = None
+            try:
+                cursor = db.cursor()
+                cursor.execute("SELECT * FROM USERINFO WHERE unique_id='%s';" % self.user_unique)
+                result = cursor.fetchall()
+                # print(type(result))
+                # print(len(result[0]))
+            except Exception as e:
+                print("login" + e.__str__())
+
+            username = result[0][0]
+            name = result[0][2]
+            file_number = str(time.strftime("%Y%m%d%H%M%S", time.localtime()))
+            date = file_number[:8]
+            log_path = os.path.join("./docs/data/", (name + self.user_unique + "/LOG/diag" + file_number + ".txt"))
+            file = open(log_path, 'a+')
+            diagnosis = struct.unpack("=%ds" % len(receive2), receive2)
+            file.write(str(diagnosis[0], encoding="gbk"))
+            file.close()
+            try:
+                cursor = db.cursor()
+                cursor.execute("Insert into log(username, name, file_number, date, unique_id, log_path)"
+                               "values('%s', '%s', '%s', '%s', '%s', '%s');" %
+                               (username, name, file_number, date,
+                                self.user_unique, log_path))
+                db.commit()
+            except Exception as e:
+                print("update data fail" + e.__str__())
+            db.close()
+
+            try:
+                self.check_data_win = LogReader(self.user_unique, name, log_path, file_number)
+                self.check_data_win.show()
+            except Exception as e:
+                QMessageBox.information(self, 'Error', e.__str__(), QMessageBox.Ok)
+        else:
+            QMessageBox.information(self, '错误！', '请重新发送请求！', QMessageBox.Ok)
+        # QMessageBox.information(self, '祝您身体健康！', self.user_unique, QMessageBox.Ok)
 
     def closeWin(self):
 

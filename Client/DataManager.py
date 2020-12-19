@@ -1,3 +1,5 @@
+import os
+
 import numpy
 from PyQt5.Qt import *
 from Client.Display import Display
@@ -241,14 +243,16 @@ class DataManager(QWidget):
             yes.setText("确定")
             no.setText("取消")
             question.exec_()
-            # reply = QMessageBox.question(self, "删除", "确认要删除编号为'%s'的信息吗？" % self.items[self._item_row][3],
-            #                              QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
+
             if question.clickedButton() == yes:
                 try:
                     sql = "delete from userdata where (data_number='%s' and data_type='%s');" % \
                           (self.items[self._item_row][3], self._data_type)
                     cursor.execute(sql)
                     db.commit()
+                    if self.items[self._item_row][7] == "Yes":
+                        print(self.items[self._item_row][6])
+                        os.remove(self.items[self._item_row][6])
                     # result = cursor.fetchall()
                     self.items = self.select_data()
                     self.table.clear()

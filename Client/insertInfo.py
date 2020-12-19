@@ -44,8 +44,8 @@ def insert_data():
         cursor.execute("Insert into userdata(username, name, unique_id, data_number, date, "
                        "data_type, value, checkable, synchronized)"
                        "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" %
-                       ('universal', '杨宇航', '4131130301', '120201208141904', '20201208',
-                        'heart rate', '73', 'No', 'No'))
+                       ('universal', '杨宇航', '1550', '120201209141904', '20201209',
+                        'ECG', './docs/data/杨宇航1550/ECG/filtered/data332_Channel1_dec.txt', 'Yes', 'No'))
         connect.commit()
     except Exception as e:
         print("wrong!" + e.__str__())
@@ -73,5 +73,5 @@ def insert_log():
     connect.close()
 
 
-# insert_data()
-insert_log()
+insert_data()
+# insert_log()
