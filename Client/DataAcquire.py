@@ -229,7 +229,7 @@ class DataAcquire(QWidget):
             self.curve_channel1 = self.RespirationWinHandle.plot(self.display_channel1, pen=self.pen)
             self.two_channel = True
             if self.data_type == "ECG":
-                self.channel1_type = "ECG"
+                self.channel1_type = "RESP"
                 self.channel2_type = "ECG"
             else:
                 self.channel1_type = "RESP"
@@ -309,7 +309,7 @@ class DataAcquire(QWidget):
         result = None
         try:
             cursor = db.cursor()
-            sql = "select * from userinfo where unique_id='%s';" % self.user_unique_id
+            sql = "select * from USERINFO where unique_id='%s';" % self.user_unique
             cursor.execute(sql)
             result = cursor.fetchall()
         except Exception as e:
@@ -326,19 +326,26 @@ class DataAcquire(QWidget):
         # //-oriX means the data which not be remove the baseline
         # //-resultX means the data which be smoothed and removed the baseline
         # //-rawX means the data which not be filtered
-        ori2, result2 = data_processor.getter()
+        ori2, result2, heart_rate2 = data_processor.getter()
+        # print(ori2.shape)
+        # print(result2.shape)
+        # print(type(result2))
+        # print(type(self.result2))
         result2 = result2.reshape(len(result2), 1)
         ori2 = ori2.reshape(len(ori2), 1)
-        raw2 = self.original2.reshape(len(self.original2), 1)
+        raw2 = np.array(self.result2)
+        # print(raw2.shape)
+        raw2 = raw2.reshape(len(raw2), 1)
 
         if self.two_channel:
             data_processor.setter(self.result1)
             data_processor.execute()
-            ori1, result1 = data_processor.getter()
+            ori1, result1, heart_rate1 = data_processor.getter()
 
             result1 = result1.reshape(len(result1), 1)
             ori1 = ori1.reshape(len(ori1), 1)
-            raw1 = self.original1.reshape(len(self.original1), 1)
+            raw1 = np.array(self.result1)
+            raw1 = raw1.reshape(len(raw1), 1)
 
             raw_data1 = os.path.join("./docs/data/", (name + self.user_unique + "/" + self.channel1_type +
                                                       "/original/raw_1_" + self.start_time + ".txt"))
@@ -346,16 +353,16 @@ class DataAcquire(QWidget):
                                                       "/filtered/filtered_1_" + self.start_time + ".txt"))
             final_data1 = os.path.join("./docs/data/", (name + self.user_unique + "/" + self.channel1_type +
                                                         "/filtered/final_1_" + self.start_time + ".txt"))
-            np.savetxt(raw_data1, raw1)
-            np.savetxt(ori_data1, ori1)
-            np.savetxt(final_data1, result1)
+            np.savetxt(raw_data1, raw1[1000:-500])
+            np.savetxt(ori_data1, ori1[1000:-500])
+            np.savetxt(final_data1, result1[1000:-500])
 
             try:
                 cursor = db.cursor()
-                cursor.execute("Insert into userdata(username, name, unique_id, data_number, date, "
-                               "data_type, value, checkable, synchronized);"
+                cursor.execute("insert into USERDATA(username, name, unique_id, data_number, date, "
+                               "data_type, value, checkable, synchronized)"
                                "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" %
-                               (username, name, self.user_unique, "1" + self.start_time, self.start_time,
+                               (username, name, self.user_unique, "1" + self.start_time, self.start_time[:8],
                                 self.channel1_type, final_data1, 'Yes', 'No'))
                 db.commit()
             except Exception as e:
@@ -374,14 +381,27 @@ class DataAcquire(QWidget):
 
         try:
             cursor = db.cursor()
-            cursor.execute("Insert into userdata(username, name, unique_id, data_number, date, "
-                           "data_type, value, checkable, synchronized);"
+            cursor.execute("insert into USERDATA(username, name, unique_id, data_number, date, "
+                           "data_type, value, checkable, synchronized)"
                            "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" %
-                           (username, name, self.user_unique, "2" + self.start_time, self.start_time,
+                           (username, name, self.user_unique, "2" + self.start_time, self.start_time[:8],
                             self.channel2_type, final_data2, 'Yes', 'No'))
             db.commit()
         except Exception as e:
             print("wrong!" + e.__str__())
+
+        try:
+            cursor = db.cursor()
+            cursor.execute("insert into USERDATA(username, name, unique_id, data_number, date, "
+                           "data_type, value, checkable, synchronized)"
+                           "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" %
+                           (username, name, self.user_unique, "2" + self.start_time, self.start_time[:8],
+                            "HR", heart_rate2, 'No', 'No'))
+            db.commit()
+        except Exception as e:
+            print("wrong!" + e.__str__())
+
+        QMessageBox.information(self, "数据保存成功！", "数据已保存！", QMessageBox.Ok)
 
     def slot_display(self):
 
@@ -531,7 +551,7 @@ class Getter(QThread):
                 message = self.q.get()
                 message += self.q.get()
                 message += self.q.get()
-                # print(self.q.qsize())
+                print(self.q.qsize())
 
                 # original1 = []
                 # original2 = []

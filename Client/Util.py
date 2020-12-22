@@ -6,6 +6,7 @@ import re
 # from binascii import b2a_hex
 from datetime import datetime, timedelta
 
+import ecgdetectors
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -326,6 +327,7 @@ class SignalProcess:
         self.raw = []
         self.baseline = []
         self.final_data = []
+        self.heart_rate = 0
 
     def _butter_low_pass(self):
 
@@ -390,6 +392,17 @@ class SignalProcess:
         else:
             return []
 
+    def _get_heart_rate(self, data):
+
+        fs = 125
+        detector = ecgdetectors.Detectors(fs)
+        data = data.reshape(len(data), 1)
+        r_peak = detector.christov_detector(data[1000:-500])
+        size = len(r_peak)
+        heart_rate = size * 60 / (len(data[1000:-500]) / 125)
+        print(heart_rate)
+        self.heart_rate = int(heart_rate)
+
     def setter(self, data):
 
         """
@@ -411,6 +424,7 @@ class SignalProcess:
         self.raw = self._butter_low_pass_filter()
         self.baseline = self._base_line()
         self.final_data = self._smooth()
+        self._get_heart_rate(self.baseline)
 
     def getter(self):
 
@@ -419,7 +433,7 @@ class SignalProcess:
         :return: processed signal
         """
 
-        return self.raw, self.final_data
+        return self.raw, self.final_data, self.heart_rate
 
 
 class Caller:
@@ -504,12 +518,14 @@ class Caller:
         self._tcp_socket.send(self._message1)  # //-send the header
 
         # //- if it's time check, the message2 should be ""
-        if self._message2 != "":
+        if type(self._message2) is not str:
             self._tcp_socket.send(self._message2)
 
         # //-get the feedback from server
         receive_msg = self._tcp_socket.recv(4096)
-        receive_msg2 = self._tcp_socket.recv(8192)
+        receive_msg2 = None
+        if self._message2 == "diagnosis":
+            receive_msg2 = self._tcp_socket.recv(8192)
 
         # //-store the feedback
         self.save(receive_msg, receive_msg2)

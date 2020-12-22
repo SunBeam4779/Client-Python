@@ -173,7 +173,7 @@ class DataManager(QWidget):
         result = None
         try:
             cursor = db.cursor()
-            sql = "select * from userdata where unique_id='%s' order by data_number" % self.user_unique_id
+            sql = "select * from USERDATA where unique_id='%s' order by data_number" % self.user_unique_id
             cursor.execute(sql)
             result = cursor.fetchall()
         except Exception as e:
@@ -246,7 +246,7 @@ class DataManager(QWidget):
 
             if question.clickedButton() == yes:
                 try:
-                    sql = "delete from userdata where (data_number='%s' and data_type='%s');" % \
+                    sql = "delete from USERDATA where (data_number='%s' and data_type='%s');" % \
                           (self.items[self._item_row][3], self._data_type)
                     cursor.execute(sql)
                     db.commit()

@@ -174,7 +174,7 @@ class LogManager(QWidget):
         result = None
         try:
             cursor = db.cursor()
-            sql = "select * from log where unique_id='%s';" % self.user_unique_id  # sort order
+            sql = "select * from LOG where unique_id='%s';" % self.user_unique_id  # sort order
             cursor.execute(sql)
             result = cursor.fetchall()
         except Exception as e:
@@ -246,7 +246,7 @@ class LogManager(QWidget):
             if question.clickedButton() == yes:
                 try:
                     print(self.items[self._item_row][2])
-                    sql = "delete from log where (file_number='%s' and unique_id='%s');" % \
+                    sql = "delete from LOG where (file_number='%s' and unique_id='%s');" % \
                           (self.items[self._item_row][2], self.user_unique_id)
                     cursor.execute(sql)
                     db.commit()

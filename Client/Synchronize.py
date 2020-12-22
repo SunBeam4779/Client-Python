@@ -161,7 +161,7 @@ class Synchronize(QWidget):
             item_id = QTableWidgetItem(item[2])  # unique id
             item_type = QTableWidgetItem(item[5])  # data type
             # item_value = QTableWidgetItem(item[6])  # value or path
-            item_checkable = QTableWidgetItem(item[7])  # checkable
+            item_checkable = QTableWidgetItem(item[8])  # checkable
             self.table.setCellWidget(index, 0, check_item)
             self.table.setItem(index, 1, item_id)
             self.table.setItem(index, 2, item_type)
@@ -202,7 +202,7 @@ class Synchronize(QWidget):
 
         result = None
         try:
-            sql = "select * from userdata where(unique_id=%s and synchronized='No');" % self.user_unique
+            sql = "select * from USERDATA where(unique_id=%s and synchronized='No');" % self.user_unique
             cursor = db.cursor()
             cursor.execute(sql)
             result = cursor.fetchall()
@@ -238,7 +238,7 @@ class Synchronize(QWidget):
         # //-send header
         caller = Caller(self._ip_address, int(self._ip_port))
         # caller.signal.connect(self.slot_getter)
-        caller.setter(head, "")
+        caller.setter(head, "time_check")
         caller.client_send()
         receive1, receive2 = caller.getter()
         # print(receive)
@@ -269,7 +269,7 @@ class Synchronize(QWidget):
 
         result = None
         try:
-            sql = "select * from userinfo where unique_id=%s;" % self.user_unique
+            sql = "select * from USERINFO where unique_id=%s;" % self.user_unique
             cursor = db.cursor()
             cursor.execute(sql)
             result = cursor.fetchall()
@@ -418,7 +418,7 @@ class Synchronize(QWidget):
                 print("database connection wrong" + e.__str__())
 
             try:
-                sql = "update userdata set synchronized='Yes' " \
+                sql = "update USERDATA set synchronized='Yes' " \
                       "where(unique_id=%s and data_number=%s and data_type='%s');"\
                       % (self.user_unique, self._data_time, self._data_type)
                 cursor = db.cursor()
@@ -455,7 +455,7 @@ class Synchronize(QWidget):
         # //- the Caller code should be uncomment if you wanna add the diagnosis receiving code.
         # //-send header
         caller = Caller(self._ip_address, int(self._ip_port))
-        caller.setter(head, "")
+        caller.setter(head, "diagnosis")
         caller.client_send()
         receive1, receive2 = caller.getter()
         # print(receive)
@@ -490,7 +490,7 @@ class Synchronize(QWidget):
             file.close()
             try:
                 cursor = db.cursor()
-                cursor.execute("Insert into log(username, name, file_number, date, unique_id, log_path)"
+                cursor.execute("Insert into LOG(username, name, file_number, date, unique_id, log_path)"
                                "values('%s', '%s', '%s', '%s', '%s', '%s');" %
                                (username, name, file_number, date,
                                 self.user_unique, log_path))
