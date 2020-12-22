@@ -82,14 +82,14 @@ class MainWindow(QWidget):
         self.RESP_graph = GraphicsLayoutWidget(self)
 
         # fake data
-        data = np.loadtxt("./docs/data/yuhang4131130301/ECG/filtered/data332_Channel1_dec.txt")
-        data2 = np.loadtxt("./docs/data/yuhang4131130301/ECG/filtered/data312_Channel1_dec.txt")
-        print(data.shape)
-        print(data2.shape)
+        # data = np.loadtxt("./docs/data/yuhang4131130301/ECG/filtered/data332_Channel1_dec.txt")
+        # data2 = np.loadtxt("./docs/data/yuhang4131130301/ECG/filtered/data312_Channel1_dec.txt")
+        # print(data.shape)
+        # print(data2.shape)
 
-        self.ECG_graph.addPlot(y=data, pen=pg.mkPen(color='b', width=2))
-        self.Pulse_graph.addPlot(y=data, pen=pg.mkPen(color='b', width=2))
-        self.RESP_graph.addPlot(y=data2, pen=pg.mkPen(color='b', width=2))
+        # self.ECG_graph.addPlot(y=data, pen=pg.mkPen(color='b', width=2))
+        # self.Pulse_graph.addPlot(y=data, pen=pg.mkPen(color='b', width=2))
+        # self.RESP_graph.addPlot(y=data2, pen=pg.mkPen(color='b', width=2))
 
         self.valueOfHeartRate = QLabel()
         self.valueOfBloodPressure = QLabel()
@@ -437,7 +437,7 @@ class MainWindow(QWidget):
         result = None
         try:
             cursor = db.cursor()
-            sql = "select * from userdata where (unique_id='%s' and date='%s') order by data_number" % \
+            sql = "select * from USERDATA where (unique_id='%s' and date='%s') order by data_number" % \
                   (self.user_unique, day)
             cursor.execute(sql)
             result = cursor.fetchall()
@@ -609,71 +609,73 @@ class MainWindow(QWidget):
             except Exception as e:
                 print(e.__str__())
 
-        if not os.path.exists(ecg):
-            try:
-                os.mkdir(ecg)
-            except Exception as e:
-                print(e.__str__())
+            if not os.path.exists(ecg):
+                try:
+                    os.mkdir(ecg)
+                except Exception as e:
+                    print(e.__str__())
 
-        if not os.path.exists(ecg_original):
-            try:
-                os.mkdir(ecg_original)
-            except Exception as e:
-                print(e.__str__())
+            if not os.path.exists(ecg_original):
+                try:
+                    os.mkdir(ecg_original)
+                except Exception as e:
+                    print(e.__str__())
 
-        if not os.path.exists(ecg_filtered):
-            try:
-                os.mkdir(ecg_filtered)
-            except Exception as e:
-                print(e.__str__())
+            if not os.path.exists(ecg_filtered):
+                try:
+                    os.mkdir(ecg_filtered)
+                except Exception as e:
+                    print(e.__str__())
 
-        if not os.path.exists(resp):
-            try:
-                os.mkdir(resp)
-            except Exception as e:
-                print(e.__str__())
+            if not os.path.exists(resp):
+                try:
+                    os.mkdir(resp)
+                except Exception as e:
+                    print(e.__str__())
 
-        if not os.path.exists(resp_original):
-            try:
-                os.mkdir(resp_original)
-            except Exception as e:
-                print(e.__str__())
+            if not os.path.exists(resp_original):
+                try:
+                    os.mkdir(resp_original)
+                except Exception as e:
+                    print(e.__str__())
 
-        if not os.path.exists(resp_filtered):
-            try:
-                os.mkdir(resp_filtered)
-            except Exception as e:
-                print(e.__str__())
+            if not os.path.exists(resp_filtered):
+                try:
+                    os.mkdir(resp_filtered)
+                except Exception as e:
+                    print(e.__str__())
 
-        if not os.path.exists(pulse):
-            try:
-                os.mkdir(pulse)
-            except Exception as e:
-                print(e)
+            if not os.path.exists(pulse):
+                try:
+                    os.mkdir(pulse)
+                except Exception as e:
+                    print(e)
 
-        if not os.path.exists(pulse_original):
-            try:
-                os.mkdir(pulse_original)
-            except Exception as e:
-                print(e.__str__())
+            if not os.path.exists(pulse_original):
+                try:
+                    os.mkdir(pulse_original)
+                except Exception as e:
+                    print(e.__str__())
 
-        if not os.path.exists(pulse_filtered):
-            try:
-                os.mkdir(pulse_filtered)
-            except Exception as e:
-                print(e.__str__())
+            if not os.path.exists(pulse_filtered):
+                try:
+                    os.mkdir(pulse_filtered)
+                except Exception as e:
+                    print(e.__str__())
 
-        if not os.path.exists(video):
-            try:
-                os.mkdir(video)
-            except Exception as e:
-                print(e.__str__())
+            if not os.path.exists(video):
+                try:
+                    os.mkdir(video)
+                except Exception as e:
+                    print(e.__str__())
 
-        if not os.path.exists(log):
-            try:
-                os.mkdir(log)
-            except Exception as e:
-                print(e.__str__())
+            if not os.path.exists(log):
+                try:
+                    os.mkdir(log)
+                except Exception as e:
+                    print(e.__str__())
+        else:
+            return
 
     def closeEvent(self, event):
 

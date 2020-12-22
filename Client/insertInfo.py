@@ -23,7 +23,7 @@ def insert_img(path_):
     cursor = connect.cursor()
     # cursor.execute("insert into img set imgs='%s'" % mysql.Binary(img))
     try:
-        cursor.execute("Insert into profile(username, name, unique_id, profile_path) "
+        cursor.execute("insert into PROFILE(username, name, unique_id, profile_path) "
                        "values('%s', '%s', '%s', '%s')" % ('universal', 'yuhang', '4131130301', path_))
         connect.commit()
     except Exception as e:
@@ -41,7 +41,7 @@ def insert_data():
 
     cursor = connect.cursor()
     try:
-        cursor.execute("Insert into userdata(username, name, unique_id, data_number, date, "
+        cursor.execute("insert into USERDATA(username, name, unique_id, data_number, date, "
                        "data_type, value, checkable, synchronized)"
                        "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" %
                        ('universal', '杨宇航', '1550', '120201209141904', '20201209',
@@ -62,7 +62,7 @@ def insert_log():
 
     cursor = connect.cursor()
     try:
-        cursor.execute("Insert into log(username, name, file_number, date, unique_id, log_path)"
+        cursor.execute("insert into LOG(username, name, file_number, date, unique_id, log_path)"
                        "values('%s', '%s', '%s', '%s', '%s', '%s');" %
                        ('universal', '杨宇航', '120201208141904', '20201208',
                         '1550', 'D:/python3/workspace/Client/Client/docs/log.txt'))
