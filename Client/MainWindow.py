@@ -124,6 +124,7 @@ class MainWindow(QWidget):
         self.horizon_bottom_left_layout_RESP = QHBoxLayout()
 
         self.video_thread = CameraHandler(self.Video, self.user_name, self.user_unique)
+        self.video_thread.signal.connect(self._slot_video_saving)
 
         # add item
         self._add_label()
@@ -564,7 +565,10 @@ class MainWindow(QWidget):
         :return: none
         """
 
-        self.video_thread.setter()
+        if not self.video_thread.setter():
+            QMessageBox.information(self, '保存成功！', '视频已保存！', QMessageBox.Ok)
+        else:
+            QMessageBox.information(self, '保存失败！', '视频未保存！', QMessageBox.Ok)
 
     def _slot_video_start(self):
 
@@ -574,8 +578,10 @@ class MainWindow(QWidget):
         """
 
         if self.video_thread.working:
+            print(1)
             self.video_thread.start()
         else:
+            print(2)
             self.video_thread.setter()
             self.video_thread.start()
 
@@ -717,6 +723,7 @@ class CameraHandler(QThread):
     _frame_size = None
     _name = "not defined"
     _unique = "not defined"
+    signal = pyqtSignal(bool)
 
     def __init__(self, label, name, unique):
         super(CameraHandler, self).__init__()
@@ -739,12 +746,17 @@ class CameraHandler(QThread):
 
         # //- get the start time as the name of video
         start_time = str(time.strftime("%Y%m%d%H%M%S", time.localtime()))
+        # print(start_time)
+        # print(self.working)
+        # print(self.cap.isOpened())
         path = os.path.join("./docs/data/", (self._name + self._unique + "/VIDEO/" + start_time + ".mp4"))
         # print(path)
 
         # //- set the output
         self.out = cv2.VideoWriter(path, self._fourcc, self._fps, (self._width, self._height))
         if self.cap.isOpened():
+            # //- record the start time when the camera is opened.
+            thistime = time.time()
             # //- display the preview and record the video
             while self.working:
                 ret, frame = self.cap.read()
@@ -757,17 +769,26 @@ class CameraHandler(QThread):
                                frames.shape[0], QImage.Format_RGB888)
                 # cv2.imshow("1", frame2)
                 self.video.setPixmap(QPixmap.fromImage(image))
+
+                # //- when the record length reach 3 mins(the value should be 180, but it is 10 while debugging), stop the recorder.
+                # //- this loop can also be close by the button called "VideoSaving".
+                if time.time() - thistime >= 10:
+                    break
             self.cap.release()
             self.out.release()
+            self.signal.emit(False)
 
     def setter(self):
 
         """
         stop the thread, or resume it.
-        :return: none
+        :return: True or False, check the capture is opened or not.
         """
 
         if self.working:
             self.working = False
         else:
             self.working = True
+            self.cap = cv2.VideoCapture(0)
+
+        return False
