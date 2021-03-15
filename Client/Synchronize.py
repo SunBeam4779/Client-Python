@@ -385,7 +385,24 @@ class Synchronize(QWidget):
         second = int(time_of_data[12:])
         acquire_time = TimeSwitcher.datetime_to_ColeDatetime(
             datetime(year=year, month=month, day=day, hour=hour, minute=minute, second=second))
-        phy = struct.pack("<i2iiii%sf%sf%sffffd2h" % (len(ecg_channel_1), len(ecg_channel_2), len(respiration)),
+        # print(acquire_time)
+        length_of_ecg1 = len(ecg_channel_1)
+        length_of_ecg2 = len(ecg_channel_2)
+        length_of_resp = len(respiration)
+        if length_of_ecg1 != 8192:
+            dist = 8192 - length_of_ecg1
+            length_of_ecg1 = 8192
+            ecg_channel_1.extend(0.0 for _ in range(dist))
+        if length_of_ecg2 != 8192:
+            dist = 8192 - length_of_ecg2
+            length_of_ecg2 = 8192
+            ecg_channel_2.extend(0.0 for _ in range(dist))
+        if length_of_resp != 8192:
+            dist = 8192 - length_of_resp
+            length_of_resp = 8192
+            respiration.extend(0.0 for _ in range(dist))
+            print(len(ecg_channel_1))
+        phy = struct.pack("<i2iiii%sf%sf%sffffd2h" % (length_of_ecg1, length_of_ecg2, length_of_resp),  # <i2iiii%sf%sf%sffffd2h
                           int(self.user_unique),
                           *bp,
                           bp_map,
@@ -407,7 +424,7 @@ class Synchronize(QWidget):
         caller.setter(head, phy)
         caller.client_send()
         receive1, receive2 = caller.getter()
-        # print(receive)
+        # print(receive1)
         first, second, third, fourth, fifth, six = struct.unpack("<id4h", receive1)
         if first == 13090:  # //- data was sent without mistake
             # //-update the data showing table and the content in database

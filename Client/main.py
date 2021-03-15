@@ -1,4 +1,9 @@
 # from PyQt5.Qt import QDate
+import sys
+import os
+# //-add the address of this project so that this code could be executed in command line
+sys.path.append(os.path.dirname(sys.path[0]))
+
 from PyQt5.QtCore import QDate
 from PyQt5.QtWidgets import QApplication
 from Client.StartWindow import StartWindow
@@ -12,8 +17,8 @@ from Client.Display import Display
 from Client.DataAcquire import DataAcquire
 from Client.LogManager import LogManager
 from Client.LogReader import LogReader
-import sys
 
+# os.environ['QT_IM_MODULE'] = "ibus"  # enable this program to use Chinese input in Linux environment.
 app = QApplication(sys.argv)
 # window = DataAcquire(None)
 # window = MainWindow([])

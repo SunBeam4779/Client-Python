@@ -210,7 +210,11 @@ class BLE(QWidget):
         row_index = self.table.currentIndex().row()
         items = list(self._result_of_scan.keys())
         self._address = self._result_of_scan[items[row_index]]
-        self._data_type = str(items[row_index])[-3:]
+        name = str(items[row_index])  # get the name of BLE peripheral
+        if name == "BW-ECG-01":
+            self._data_type = "ECG01"
+        else:
+            self._data_type = name[-3:]
         # print(self._data_type)
 
     def slot_connect(self):
