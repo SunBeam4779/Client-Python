@@ -5,7 +5,7 @@ simple script to insert data into the database
 """
 
 path = "D:/python3/workspace/Client/Client/docs/202011061728.jpg"
-ECG = "D:/My Documents/ECG Detector Project/data/ECG/Filtered/data332_Channel1_dec.txt"
+ECG = "D:/My Documents/ECG Detector Project/data/ECG/Filtered/data999_Channel1_dec.txt"
 # file = open(path, encoding='utf-8', errors='ignore')
 # img = file.read()
 # file.close()
@@ -41,11 +41,16 @@ def insert_data():
 
     cursor = connect.cursor()
     try:
+        # cursor.execute("insert into USERDATA(username, name, unique_id, data_number, date, "
+        #                "data_type, value, checkable, synchronized)"
+        #                "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" %
+        #                ('universal', '杨宇航', '1550', '120210301100104', '20210301',
+        #                 'ECG', './docs/data/杨宇航1550/ECG/filtered/data999_Channel1_dec.txt', 'Yes', 'No'))
         cursor.execute("insert into USERDATA(username, name, unique_id, data_number, date, "
                        "data_type, value, checkable, synchronized)"
                        "values('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');" %
-                       ('universal', '杨宇航', '1550', '120201209141904', '20201209',
-                        'ECG', './docs/data/杨宇航1550/ECG/filtered/data332_Channel1_dec.txt', 'Yes', 'No'))
+                       ('universal', '杨宇航', '1550', '20210301104404', '20210301',
+                        'HR', '74', 'No', 'No'))
         connect.commit()
     except Exception as e:
         print("wrong!" + e.__str__())
@@ -64,7 +69,7 @@ def insert_log():
     try:
         cursor.execute("insert into LOG(username, name, file_number, date, unique_id, log_path)"
                        "values('%s', '%s', '%s', '%s', '%s', '%s');" %
-                       ('universal', '杨宇航', '120201208141904', '20201208',
+                       ('universal', '杨宇航', '120210301095304', '20210301',
                         '1550', 'D:/python3/workspace/Client/Client/docs/log.txt'))
         connect.commit()
     except Exception as e:

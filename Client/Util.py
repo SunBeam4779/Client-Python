@@ -95,7 +95,7 @@ class Splitter:
     def process_string(message, ori1, ori2, res1, res2, display1, display2):
 
         """
-        process the string of BLE data, to get the essential message.
+        process the string of BLE data, to get the essential message. oriX is hex type, resX and displayX is dec type.
         :param display2: a queue which contains the to-be-displayed data of channel2. Passed by the caller
         :param display1: a queue which contains the to-be-displayed data of channel1. Passed by the caller
         :param res2: a list which contains the final data preprocessing result of channel2. Passed by the caller
@@ -211,6 +211,108 @@ class Splitter:
             result2 = result2 + "00"
 
             i += 8
+
+            original_channel1.append(result1)
+            original_channel2.append(result2)
+            value1, value2 = Splitter.get_dec(result1, result2)
+            final1.append(value1)
+            final2.append(value2)
+            plot1.append(value1)
+            plot2.append(value2)
+
+        display1.put(plot1)
+        display2.put(plot2)
+        # print(result1)
+        # print(result2)
+        # return original_channel1, original_channel2, final1, final2
+
+
+class SplitterD:
+
+    """
+    handle the BLE string-type data splitting.
+    """
+
+    ori1 = []
+    ori2 = []
+    res1 = []
+    res2 = []
+
+    @staticmethod
+    def process_string(message, ori1, ori2, res1, res2, display1, display2):
+
+        """
+        process the string of BLE data, to get the essential message. oriX is hex type, resX and displayX is dec type.
+        :param display2: a queue which contains the to-be-displayed data of channel2. Passed by the caller
+        :param display1: a queue which contains the to-be-displayed data of channel1. Passed by the caller
+        :param res2: a list which contains the final data preprocessing result of channel2. Passed by the caller
+        :param res1: a list which contains the final data preprocessing result of channel1. Passed by the caller
+        :param ori2: a list which contains the original raw data of channel2. Passed by the caller
+        :param ori1: a list which contains the original raw data of channel1. Passed by the caller
+        :param message: raw data to be preprocessed
+        :return: none
+        """
+
+        data = message[4:]
+        SplitterD.switch_form(data, ori1, ori2, res1, res2, display1, display2)
+
+    @staticmethod
+    def two_complement(value, bits):
+
+        """
+        handle the two's complement data
+        :param value: value to be transformed
+        :param bits: the bit width of the value
+        :return: processed result
+        """
+
+        if value >= 2 ** bits:
+            raise ValueError("Value: {} out of range of {}-bit value.".format(value, bits))
+        else:
+            return value - int((value << 1) & 2 ** bits)
+
+    @staticmethod
+    def get_dec(channel1, channel2):
+
+        """
+        switch from hex to dec
+        :param channel1: value of data from channel1
+        :param channel2: value of data from channel2
+        :return: decimal result
+        """
+
+        res1 = int(channel1, 16)
+        res2 = int(channel2, 16)
+        return res1, res2
+
+    @staticmethod
+    def switch_form(string, original_channel1, original_channel2, final1, final2, display1, display2):
+
+        """
+        get the original data and final result of two channels
+        :param display2: a queue which contains the to-be-displayed data of channel2. Passed by the caller
+        :param display1: a queue which contains the to-be-displayed data of channel1. Passed by the caller
+        :param final2: a list which contains the final data preprocessing result of channel2. Passed by the caller
+        :param final1: a list which contains the final data preprocessing result of channel1. Passed by the caller
+        :param original_channel2: a list which contains the original raw data of channel2. Passed by the caller
+        :param original_channel1: a list which contains the original raw data of channel1. Passed by the caller
+        :param string: the data of string type to be cut into two channels
+        :return: processed result
+        """
+
+        # original_channel1 = []
+        # original_channel2 = []
+        plot1 = []
+        plot2 = []
+        length = len(string)
+        i = 0
+        while i < length:
+            result1 = '0x'
+            result1 = result1 + string[i:i + 6]
+
+            result2 = result1
+
+            i += 6
 
             original_channel1.append(result1)
             original_channel2.append(result2)
@@ -399,7 +501,7 @@ class SignalProcess:
         data = data.reshape(len(data), 1)
         r_peak = detector.christov_detector(data[1000:-500])
         size = len(r_peak)
-        heart_rate = size * 60 / (len(data[1000:-500]) / 125)
+        heart_rate = size * 60 / (len(data[1000:-500]) / fs)
         print(heart_rate)
         self.heart_rate = int(heart_rate)
 
@@ -421,6 +523,19 @@ class SignalProcess:
         :return:
         """
 
+        # //-data normalization
+        temp_data = []
+        values = []
+        for item in self.data_:
+            values.append(int(item) * 2.42 / 8388607 / 6)
+        data_max = max(values)
+        data_min = min(values)
+        distance = data_max - data_min
+        for item in values:
+            temp_data.append((item - data_min) / distance)
+        self.data_ = temp_data
+
+        # //-execute the data processing
         self.raw = self._butter_low_pass_filter()
         self.baseline = self._base_line()
         self.final_data = self._smooth()

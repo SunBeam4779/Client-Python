@@ -5,7 +5,7 @@ import time
 import pymysql
 from PyQt5.Qt import *
 # from Client.Util import MyDelegate
-from Client.Util import SignalProcess, Splitter
+from Client.Util import SignalProcess, Splitter, SplitterD
 # from bluepy import btle
 from queue import Queue
 import pyqtgraph as pg
@@ -25,16 +25,17 @@ class DataAcquire(QWidget):
     _peripheral = None
     user_unique = "not defined"
     data_type = "not defined"
+    device_type = "not defined"
     channel1_type = "not defined"
     channel2_type = "not defined"
     start_time = "not defined"
     two_channel = False
     q = None
-    result1 = []
+    result1 = []  # dec type
     result2 = []
-    display1 = None
+    display1 = None  # dec type
     display2 = None
-    original1 = []
+    original1 = []  # hex type
     original2 = []
     display_channel1 = [0 for i in range(500)]
     display_channel2 = [0 for j in range(500)]
@@ -49,7 +50,11 @@ class DataAcquire(QWidget):
         # self._address = address
         self._peripheral = peripheral
         self.user_unique = user_unique
-        self.data_type = data_type
+        if data_type == "ECG01":  # if the device is the bought module
+            self.data_type = "ECG"
+            self.device_type = "BW"
+        else:  # if the device is the module made by ourselves
+            self.data_type = data_type
 
         # //-set ICON
         self.Icon = QIcon(self._icon)
@@ -113,8 +118,9 @@ class DataAcquire(QWidget):
         self.horizon_left_layout3 = QHBoxLayout()
         self.horizon_left_layout4 = QHBoxLayout()
 
-        self.setter = Setter(self._peripheral)
-        self.getter = Getter(self.original1, self.original2, self.result1, self.result2, self.display1, self.display2)
+        self.setter = Setter(self._peripheral, self.device_type)
+        self.getter = Getter(self.original1, self.original2, self.result1, self.result2,
+                             self.display1, self.display2, self.device_type)
         # print(self._address)
         self.setter.sinOut.connect(self.show_data)
         # self.thread.sinOut.connect(self.thread2.get)
@@ -223,6 +229,14 @@ class DataAcquire(QWidget):
         self.exit.clicked.connect(self.close_win)
 
     def type_determine(self):
+
+        """
+        determine the data type to be acquired by the device connected.
+        if the type is ECG or ENR(means the ECG and Respiration), the channel1 should be ECG,
+        the channel2 should be respiration or ECG.
+        if the data type is pulse, there should be only one channel which is the channel 2.
+        :return: None
+        """
 
         if self.data_type == "ECG" or self.data_type == "ENR":
             self.curve_channel2 = self.ECGWinHandle.plot(self.display_channel2, pen=self.pen)
@@ -483,30 +497,65 @@ class Setter(QThread):
 
     sinOut = pyqtSignal(str)
     peripheral = None
+    _type = None
 
-    def __init__(self, peripheral):
+    def __init__(self, peripheral, types):
         super(Setter, self).__init__()
         self.working = True
         # self.address = address
         self.peripheral = peripheral
+        self._type = types
 
     def run(self):
         """
-        the main task to be execute
+        the main task to be execute, to start the BLE notification receiving.
+        send the received notification as signal to Getter thread.
+        the sending affair would be handled by the MyDelegate().
         :return: none
         """
-        # self.peripheral.connect(self.address)
-        # self.peripheral.setDelegate(MyDelegate(self.sinOut))
-        svc = self.peripheral.getServiceByUUID("f000fff0-0451-4000-b000-000000000000")
-        ch = svc.getCharacteristics()[0]
-        self.peripheral.writeCharacteristic(ch.valHandle + 1, struct.pack('<bb', 0x01, 0x00))
-        # print("waiting...")
-        # self.sinOut.emit("waiting...")
 
-        while self.working:
-            if self.peripheral.waitForNotifications(1.0):
-                # print("notification:")
-                continue
+        # self.peripheral.connect(self.address)
+
+        # //-set the delegate to handle notification message process
+        # self.peripheral.setDelegate(MyDelegate(self.sinOut))
+        if self._type == "BW":
+            uuid = "0000fff0-0000-1000-8000-00805f9b34fb"  # the bought module distinguished by the name.
+            # BW means the bought module's name "BW-ECG-01".
+            svc = self.peripheral.getServiceByUUID(uuid)
+
+            # //-the characteristic that data can be written to
+            chr_of_writable = svc.getCharacteristics()[0]
+            # //-the characteristic that receives notification from other peripheral.
+            chr_of_notify = svc.getCharacteristics()[1]
+            # //-enable the notify
+            self.peripheral.writeCharacteristic(chr_of_notify.valHandle + 1, struct.pack('<bb', 0x01, 0x00), True)
+            # //-bind user ID to BW-ECG-01, the ID could be a random ID.
+            chr_of_writable.write(b'\xE8\x41\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
+                                  True)
+            # //-start the acquiring, a time(Y/M/D/H/H/S/deltaT) should be given. the time could be a random time
+            # //-but the delta T should have meaning which is the acquiring time. 0x01 means 1 minutes.
+            # //-the delta T could be modified as other number, this could be done by UI.
+            # //-if the number could be set by user, that will be perfection.
+            chr_of_writable.write(b'\xE8\x23\x15\x03\x0b\x10\x15\x00\x00\x01', True)
+            # //-start continually acquiring
+            chr_of_writable.write(b'\xE8\20', True)
+
+            while self.working:
+                if self.peripheral.waitForNotifications(1.0):
+                    # print("notification:")
+                    continue
+        else:
+            uuid = "f000fff0-0451-4000-b000-000000000000"  # the module made by ourselves
+            svc = self.peripheral.getServiceByUUID(uuid)
+            ch = svc.getCharacteristics()[0]
+            self.peripheral.writeCharacteristic(ch.valHandle + 1, struct.pack('<bb', 0x01, 0x00))
+            # print("waiting...")
+            # self.sinOut.emit("waiting...")
+
+            while self.working:
+                if self.peripheral.waitForNotifications(1.0):
+                    # print("notification:")
+                    continue
 
 
 class Getter(QThread):
@@ -516,8 +565,9 @@ class Getter(QThread):
 
     sigOut = pyqtSignal(dict)
     working = True
+    _device_type = None
 
-    def __init__(self, original1, original2, final1, final2, display1, display2):
+    def __init__(self, original1, original2, final1, final2, display1, display2, types):
         super(Getter, self).__init__()
         self.ori1 = original1
         self.ori2 = original2
@@ -526,7 +576,11 @@ class Getter(QThread):
         self.display1 = display1
         self.display2 = display2
         self.q = Queue()
-        self.split = Splitter()
+        if types == "BW":
+            self.split = SplitterD()
+        else:
+            self.split = Splitter()
+        self._device_type = types
 
     def get(self, msg):
 
@@ -546,44 +600,54 @@ class Getter(QThread):
         :return:
         """
 
-        while self.working:
-            if self.q.qsize() >= 3:
-                message = self.q.get()
-                message += self.q.get()
-                message += self.q.get()
-                print(self.q.qsize())
+        if self._device_type == "BW":
+            while self.working:
+                if self.q.qsize() >= 1:
+                    message = self.q.get()
+                    print(self.q.qsize())
 
-                # original1 = []
-                # original2 = []
-                # res1 = []
-                # res2 = []
-                # ticks1 = time.time()
+                    # //-process the data use Util.SplitterD
+                    self.split.process_string(message, self.ori1, self.ori2, self.final1,
+                                              self.final2, self.display1, self.display2)
+        else:
+            while self.working:
+                if self.q.qsize() >= 3:
+                    message = self.q.get()
+                    message += self.q.get()
+                    message += self.q.get()
+                    print(self.q.qsize())
 
-                # //-process the data use Util.Splitter
-                self.split.process_string(message, self.ori1, self.ori2, self.final1,
-                                          self.final2, self.display1, self.display2)
-                # ticks2 = time.time()
-                # print((ticks2 - ticks1) * 1000)
-                # original1, original2, res1, res2 = self.split.ori1, self.split.ori2, self.split.res1, self.split.res2
-                # if len(original1) < 0 or len(original2) < 0 or len(res1) < 0 or len(res2) < 0:
-                #     continue
-                # else:
-                #     # print(res2[0])
-                #     # message = {'ori1': original1,
-                #     #            'ori2': original2,
-                #     #            'res1': res1,
-                #     #            'res2': res2}
-                #     # self.sigOut.emit(message)
-                #     self.ori1.extend(original1)
-                #     self.ori2.extend(original2)
-                #     self.final1.extend(res1)
-                #     self.final2.extend(res2)
-                #     self.display1.put(res1)
-                #     self.display2.put(res2)
-                #     # length = len(res2)
-                #     # for index in range(length):
-                #     #     self.display1.put(res1[index])
-                #     #     self.display2.put(res2[index])
+                    # original1 = []
+                    # original2 = []
+                    # res1 = []
+                    # res2 = []
+                    # ticks1 = time.time()
+
+                    # //-process the data use Util.Splitter
+                    self.split.process_string(message, self.ori1, self.ori2, self.final1,
+                                              self.final2, self.display1, self.display2)
+                    # ticks2 = time.time()
+                    # print((ticks2 - ticks1) * 1000)
+                    # original1, original2, res1, res2 = self.split.ori1, self.split.ori2, self.split.res1, self.split.res2
+                    # if len(original1) < 0 or len(original2) < 0 or len(res1) < 0 or len(res2) < 0:
+                    #     continue
+                    # else:
+                    #     # print(res2[0])
+                    #     # message = {'ori1': original1,
+                    #     #            'ori2': original2,
+                    #     #            'res1': res1,
+                    #     #            'res2': res2}
+                    #     # self.sigOut.emit(message)
+                    #     self.ori1.extend(original1)
+                    #     self.ori2.extend(original2)
+                    #     self.final1.extend(res1)
+                    #     self.final2.extend(res2)
+                    #     self.display1.put(res1)
+                    #     self.display2.put(res2)
+                    #     # length = len(res2)
+                    #     # for index in range(length):
+                    #     #     self.display1.put(res1[index])
+                    #     #     self.display2.put(res2[index])
 
 
 # //-Ignore it. This class is never used.

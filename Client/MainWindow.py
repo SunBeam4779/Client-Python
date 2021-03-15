@@ -104,7 +104,7 @@ class MainWindow(QWidget):
         self.VideoSaving = QPushButton()
         self.Pause = QPushButton()
         self.Stop = QPushButton()
-        self.time = QPushButton()
+        self.ChangeIP = QPushButton()
 
         # set layout
         self.vertical_layout = QVBoxLayout()
@@ -171,7 +171,7 @@ class MainWindow(QWidget):
         # self.horizon_top_left_button_layout.addStretch(0)
         self.horizon_top_left_button_layout.addWidget(self.Synchronize)
         # self.horizon_top_left_button_layout.addStretch(0)
-        self.horizon_top_left_button_layout.addWidget(self.time)
+        self.horizon_top_left_button_layout.addWidget(self.ChangeIP)
         # self.horizon_top_left_button_layout.addStretch(0)
         self.horizon_top_left_button_layout.addWidget(self.Log)
         self.horizon_top_left_button_layout.addStretch(0)
@@ -253,7 +253,7 @@ class MainWindow(QWidget):
         self.Acquire.setFont(font_of_button)
         self.CheckAndManage.setFont(font_of_button)
         self.Synchronize.setFont(font_of_button)
-        self.time.setFont(font_of_button)
+        self.ChangeIP.setFont(font_of_button)
         self.Log.setFont(font_of_button)
         self.VideoSaving.setFont(font_of_button)
         self.Pause.setFont(font_of_button)
@@ -262,7 +262,7 @@ class MainWindow(QWidget):
         self.Acquire.setText("数据采集")
         self.CheckAndManage.setText("查看与管理")
         self.Synchronize.setText("数据同步")
-        self.time.setText("校时")
+        self.ChangeIP.setText("修改IP")
         self.Log.setText("查看报告")
         self.VideoSaving.setText("保存")
         self.Pause.setText("开始")
@@ -271,7 +271,7 @@ class MainWindow(QWidget):
         self.Acquire.setFixedSize(165, 100)
         self.CheckAndManage.setFixedSize(165, 100)
         self.Synchronize.setFixedSize(165, 100)
-        self.time.setFixedSize(165, 100)
+        self.ChangeIP.setFixedSize(165, 100)
         self.Log.setFixedSize(165, 100)
 
         self.VideoSaving.setFixedSize(100, 100)
@@ -284,6 +284,7 @@ class MainWindow(QWidget):
         self.Log.clicked.connect(self._slot_log_check)
         self.VideoSaving.clicked.connect(self._slot_video_saving)
         self.Pause.clicked.connect(self._slot_video_start)
+        self.ChangeIP.clicked.connect(self._slot_change_ip)
 
     def _add_label(self):
 
@@ -522,6 +523,17 @@ class MainWindow(QWidget):
         self.data_sync_win = Synchronize(self.user_unique, self.ip_address, self.port)
         self.data_sync_win.show()
 
+    def _slot_change_ip(self):
+
+        """
+        change the IP address, if the wrong IP was input.
+        :return: none
+        """
+
+        self.getIP_win = GetIP()
+        self.getIP_win.signal.connect(self._slot_set_ip)
+        self.getIP_win.show()
+
     def _slot_get_ip(self):
 
         """
@@ -578,10 +590,10 @@ class MainWindow(QWidget):
         """
 
         if self.video_thread.working:
-            print(1)
+            # print(1)
             self.video_thread.start()
         else:
-            print(2)
+            # print(2)
             self.video_thread.setter()
             self.video_thread.start()
 
@@ -770,7 +782,8 @@ class CameraHandler(QThread):
                 # cv2.imshow("1", frame2)
                 self.video.setPixmap(QPixmap.fromImage(image))
 
-                # //- when the record length reach 3 mins(the value should be 180, but it is 10 while debugging), stop the recorder.
+                # //- when the record length reach 3 mins(the value should be 180, but it is 10 while debugging),
+                # //- stop the recorder.
                 # //- this loop can also be close by the button called "VideoSaving".
                 if time.time() - thistime >= 10:
                     break
